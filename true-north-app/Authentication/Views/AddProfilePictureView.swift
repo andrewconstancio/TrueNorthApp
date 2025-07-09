@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct AddProfilePictureView: View {
+    @EnvironmentObject var viewModel: AuthViewModel
     @State private var shouldShowImagePicker = false
-    @State private var profilePicture: UIImage?
     @State private var lastScaleValue: CGFloat = 1.0
     @State private var scale: CGFloat = 1.0
     
     private var isValidProfilePicture: Bool {
-        guard let _ = profilePicture else {
+        guard let _ = viewModel.setupProfileImage else {
             return false
         }
         return true
@@ -33,7 +33,7 @@ struct AddProfilePictureView: View {
                 shouldShowImagePicker.toggle()
             } label: {
                 ProfileImageView(
-                    image: profilePicture,
+                    image: viewModel.setupProfileImage,
                     scale: $scale,
                     lastScaleValue: $lastScaleValue
                 )
@@ -42,9 +42,15 @@ struct AddProfilePictureView: View {
             Spacer()
 
             Button {
-                // Handle continue action
+                Task {
+                    do {
+                        try await viewModel.saveUser()
+                    } catch {
+                        print(error.localizedDescription)
+                    }
+                }
             } label: {
-                Text("Continue")
+                Text("Submit")
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(width: 340, height: 65)
@@ -55,7 +61,7 @@ struct AddProfilePictureView: View {
             .padding(.bottom, 40)
         }
         .fullScreenCover(isPresented: $shouldShowImagePicker) {
-            ImageMoveAndScaleSheet(croppedImage: $profilePicture)
+            ImageMoveAndScaleSheet(croppedImage: $viewModel.setupProfileImage)
         }
         .padding()
     }

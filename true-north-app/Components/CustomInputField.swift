@@ -42,35 +42,18 @@ struct CustomInputField: View {
                     SecureField(placeholderText, text: $text)
                         .textContentType(textContentType != nil ? textContentType : .none)
                 } else {
-                    TextField(placeholderText, text: $text, onEditingChanged: { _ in
-                        text = setTextCase(text: text)
-                    })
-                    .keyboardType(keyboardType != nil ? keyboardType! : .default)
-                    .textContentType(textContentType != nil ? textContentType : .none)
-                    .disableAutocorrection(true)
-                    .textInputAutocapitalization(textInputAutoCapital != nil ? textInputAutoCapital : .none)
-                    .fontWeight(isTextBold ? .bold : .regular)
-                    .onChange(of: text) { newValue in
-                        var updatedText = setTextCase(text: newValue)
-
-                        if formatAsPhoneNumber {
-                            updatedText = formatPhoneNumber(updatedText)
-                        }
-
-                        if let maxLength {
-                            let digits = updatedText.filter(\.isNumber)
-                            if digits.count > maxLength && formatAsPhoneNumber {
-                                updatedText = formatPhoneNumber(String(digits.prefix(maxLength)))
-                            }
-                        }
-
-                        text = updatedText
-                    }
+                    TextField(placeholderText, text: $text)
+                        .keyboardType(keyboardType != nil ? keyboardType! : .default)
+                        .textContentType(textContentType != nil ? textContentType : .none)
+                        .disableAutocorrection(true)
+                        .textInputAutocapitalization(textInputAutoCapital != nil ? textInputAutoCapital : .none)
+                        .fontWeight(isTextBold ? .bold : .regular)
+                        .accentColor(.indigo)
                 }
             }
             .padding()
             .frame(width: 340, height: 65)
-            .background(Color(.systemBackground))
+            .background(Color(light: .gray.opacity(0.1), dark: .white.opacity(0.1)))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(Color.gray.opacity(0.6), lineWidth: 1)

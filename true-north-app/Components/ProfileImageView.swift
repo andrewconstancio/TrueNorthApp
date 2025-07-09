@@ -36,7 +36,7 @@ struct ProfileImageView: View {
                     )
             } else {
                 Image(systemName: "person.circle")
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color.indigo)
                     .font(.system(size: 108))
                     .frame(width: 200, height: 200)
             }

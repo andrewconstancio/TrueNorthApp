@@ -10,10 +10,9 @@ import FirebaseFirestore
 
 struct User: Identifiable, Decodable {
     @DocumentID var id: String?
-    let username: String
-    let fullname: String
+    let firstName: String
+    let lastName: String
     let profileImageUrl: String?
-    let email: String
 }
 
 extension User {

@@ -11,26 +11,23 @@ enum Tab: Hashable {
 }
 
 struct MainTabView: View {
+    @EnvironmentObject var viewModel: AuthViewModel
     @State private var selectedTab: Tab = .home
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            GoalsListView()
-                .withRootAppearance()
-                .tabItem { Label("Home", systemImage: "house") }
-                .tag(Tab.home)
+            NavigationView {
+                LazyView(GoalsListView())
+                    .environmentObject(viewModel)
+            }
+            .tabItem { Label("Home", systemImage: "house") }
+            .tag(Tab.home)
 
-            ExploreView()
-                .withRootAppearance()
-                .tabItem { Label("Explore", systemImage: "magnifyingglass") }
-                .tag(Tab.explore)
-
-            SettingsView()
-                .withRootAppearance()
-                .tabItem { Label("Settings", systemImage: "gear") }
-                .tag(Tab.settings)
+            NavigationView {
+                LazyView(SettingsView())
+            }
+            .tabItem { Label("Settings", systemImage: "gear") }
+            .tag(Tab.settings)
         }
     }
 }
-
-

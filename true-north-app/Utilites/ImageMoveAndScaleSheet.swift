@@ -308,16 +308,16 @@ struct ImageMoveAndScaleSheet: View {
         croppedImage = imageWithImage(image: inputImage!, croppedTo: CGRect(x: xPos, y: yPos, width: radius, height: radius))
         
         ///Debug maths
-        print("Input: w \(inputW) h \(inputH)")
-        print("Profile: w \(profileW) h \(profileH)")
-        print("X Origin: \( ( ( profileW - UIScreen.main.bounds.width - inset ) / 2 ) + ( currentPosition.width  * -1 ) )")
-        print("Y Origin: \( ( ( profileH - UIScreen.main.bounds.width - inset) / 2 ) + ( currentPosition.height  * -1 ) )")
-        
-        print("Scale: \(scale)")
-        print("Profile:\(profileW) + \(profileH)" )
-        print("Curent Pos: \(currentPosition.debugDescription)")
-        print("Radius: \(radius)")
-        print("x:\(xPos), y:\(yPos)")
+//        print("Input: w \(inputW) h \(inputH)")
+//        print("Profile: w \(profileW) h \(profileH)")
+//        print("X Origin: \( ( ( profileW - UIScreen.main.bounds.width - inset ) / 2 ) + ( currentPosition.width  * -1 ) )")
+//        print("Y Origin: \( ( ( profileH - UIScreen.main.bounds.width - inset) / 2 ) + ( currentPosition.height  * -1 ) )")
+//        
+//        print("Scale: \(scale)")
+//        print("Profile:\(profileW) + \(profileH)" )
+//        print("Curent Pos: \(currentPosition.debugDescription)")
+//        print("Radius: \(radius)")
+//        print("x:\(xPos), y:\(yPos)")
     }
     
     let inset: CGFloat = 15

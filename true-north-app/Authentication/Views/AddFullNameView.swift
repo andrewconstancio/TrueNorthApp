@@ -8,13 +8,11 @@
 import SwiftUI
 
 struct AddFullNameView: View {
-    @State private var firstName: String = ""
-    @State private var lastName: String = ""
-    
+    @EnvironmentObject var viewModel: AuthViewModel
     @StateObject private var keyboard = KeyboardObserver()
     
     private var isValidName: Bool {
-        !firstName.isEmpty && !lastName.isEmpty && firstName.count >= 2 && lastName.count >= 2
+        !viewModel.setupFirstName.isEmpty && !viewModel.setupLastName.isEmpty && viewModel.setupLastName.count >= 2 && viewModel.setupLastName.count >= 2
     }
     
     var body: some View {
@@ -29,14 +27,13 @@ struct AddFullNameView: View {
                     .font(.title)
                     .fontWeight(.bold)
                     .padding(.bottom)
-                
+          
                 // First name
                 CustomInputField(
                     imageName: nil,
                     placeholderText: "First Name",
                     keyboardType: .default,
-                    maxLength: 6,
-                    text: $firstName
+                    text: $viewModel.setupFirstName
                 )
                 
                 // Last name
@@ -44,8 +41,7 @@ struct AddFullNameView: View {
                     imageName: nil,
                     placeholderText: "Last Name",
                     keyboardType: .default,
-                    maxLength: 6,
-                    text: $lastName
+                    text: $viewModel.setupLastName
                 )
                 
             }
