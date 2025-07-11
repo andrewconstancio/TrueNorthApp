@@ -56,6 +56,8 @@ struct GoalsListView: View {
             .onAppear {
                 Task {
                     try? await goalViewModel.fetchGoals(for: selectedDate)
+                    let impact = UIImpactFeedbackGenerator(style: .medium)
+                    impact.impactOccurred()
                 }
             }
             .alert("Sign Out", isPresented: $showingSignOutAlert) {
@@ -124,6 +126,10 @@ extension GoalsListView {
                    }
                }
                .padding(.horizontal)
+           }
+           .onChange(of: selectedDate) { _ in
+               let impact = UIImpactFeedbackGenerator(style: .soft)
+               impact.impactOccurred()
            }
            .frame(height: 60)
            .onAppear {

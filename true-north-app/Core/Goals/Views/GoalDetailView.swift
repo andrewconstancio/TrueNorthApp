@@ -10,56 +10,72 @@ import SwiftUI
 struct GoalDetailView: View {
     let goal: Goal
     @ObservedObject var goalViewModel: GoalViewModel
+    @StateObject private var keyboard = KeyboardObserver()
     @State private var goalTextShown: String = ""
     @State private var goalText: String = ""
     @FocusState private var isKeyboardFocused: Bool
     @Environment(\.dismiss) var dismiss
     
     private var isCompleted: Bool {
-        goal.title == goalText
+        goal.title.lowercased() == goalText.lowercased()
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ZStack(alignment: .leading) {
+            Spacer()
+            
+            ZStack(alignment: .topLeading) {
                 Text(goal.title)
                     .font(.largeTitle)
+                    .fontWeight(.bold)
                     .foregroundStyle(.gray.opacity(0.3))
+                    .multilineTextAlignment(.leading)
                 
                 Text(goalTextShown)
                     .font(.largeTitle)
+                    .fontWeight(.bold)
                     .foregroundStyle(.primary)
+                    .multilineTextAlignment(.leading)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             
             Text("Type the goal title")
                 .font(.caption)
                 .padding(.bottom, 10)
             
-            
             Text(goal.description)
                 .fontWeight(.medium)
             
-            Spacer()
             Spacer()
             
             TextField("", text: $goalText)
                 .focused($isKeyboardFocused)
                 .opacity(0)
-        }
-        .toolbar(.hidden, for: .tabBar)
-        .onChange(of: goalText) { newValue in
-            handleTextChange(newValue)
-        }
-        .onChange(of: isCompleted) { newValue in
-            if newValue {
-                isKeyboardFocused = false
+            
+            Button {
                 if let goalId = goal.id {
                     Task {
                         try? await goalViewModel.saveProgress(for: goalId)
                     }
                     dismiss()
                 }
+            } label: {
+                Text("Save")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(width: 340, height: 65)
+                    .background(isCompleted ? Color.themeColor : Color.black.opacity(0.4))
+                    .clipShape(Capsule())
+                    .padding()
+                    .animation(.easeOut(duration: 0.25), value: keyboard.keyboardHeight)
+                    .opacity(isCompleted ? 1 : 0.5)
             }
+        }
+        .toolbar(.hidden, for: .tabBar)
+        .onChange(of: goalText) { newValue in
+            // Impact occurred
+            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+            handleTextChange(newValue)
         }
         .onAppear {
             isKeyboardFocused = true
@@ -78,12 +94,14 @@ struct GoalDetailView: View {
         
         // If it doesn't match, find the longest valid prefix
         var validPrefix = ""
+        var prefix = ""
         for i in 0..<min(newValue.count, goal.title.count) {
             let currentChar = newValue[newValue.index(newValue.startIndex, offsetBy: i)]
             let expectedChar = goal.title[goal.title.index(goal.title.startIndex, offsetBy: i)]
             
-            if currentChar == expectedChar {
+            if currentChar.lowercased() == expectedChar.lowercased() {
                 validPrefix += String(currentChar)
+                prefix += String(expectedChar)
             } else {
                 break
             }
@@ -91,7 +109,7 @@ struct GoalDetailView: View {
         
         // Update the text field to only contain valid characters
         goalText = validPrefix
-        goalTextShown = validPrefix
+        goalTextShown = prefix
     }
 }
 
