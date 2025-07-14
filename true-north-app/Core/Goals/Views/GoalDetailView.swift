@@ -84,32 +84,39 @@ struct GoalDetailView: View {
     }
     
     private func handleTextChange(_ newValue: String) {
-        let expectedPrefix = String(goal.title.prefix(newValue.count))
+        var newShown = ""
+        var newValid = ""
         
-        // If the new text matches the expected prefix, update both values
-        if newValue == expectedPrefix {
-            goalTextShown = newValue
-            return
-        }
+        let goalTitle = goal.title
+        var goalIndex = 0
+        var inputIndex = 0
+        let inputChars = Array(newValue)
+        let goalChars = Array(goalTitle)
         
-        // If it doesn't match, find the longest valid prefix
-        var validPrefix = ""
-        var prefix = ""
-        for i in 0..<min(newValue.count, goal.title.count) {
-            let currentChar = newValue[newValue.index(newValue.startIndex, offsetBy: i)]
-            let expectedChar = goal.title[goal.title.index(goal.title.startIndex, offsetBy: i)]
+        while goalIndex < goalChars.count && inputIndex < inputChars.count {
+            let inputChar = inputChars[inputIndex]
+            let goalChar = goalChars[goalIndex]
             
-            if currentChar.lowercased() == expectedChar.lowercased() {
-                validPrefix += String(currentChar)
-                prefix += String(expectedChar)
+            if inputChar.lowercased() == goalChar.lowercased() {
+                // Correct character typed
+                newValid.append(inputChar)
+                newShown.append(goalChar)
+                goalIndex += 1
+                inputIndex += 1
+            } else if inputChar == " " {
+                // Spacebar: treat as skip to next correct letter
+                newValid.append(goalChar)
+                newShown.append(goalChar)
+                goalIndex += 1
+                inputIndex += 1
             } else {
+                // Incorrect character typed
                 break
             }
         }
-        
-        // Update the text field to only contain valid characters
-        goalText = validPrefix
-        goalTextShown = prefix
+
+        goalText = newValid
+        goalTextShown = newShown
     }
 }
 
