@@ -1,10 +1,3 @@
-//
-//  true_north_appApp.swift
-//  true-north-app
-//
-//  Created by Andrew Constancio on 6/19/25.
-//
-
 import SwiftUI
 
 @main

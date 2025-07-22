@@ -1,9 +1,3 @@
-//
-//  String.swift
-//  true-north-app
-//
-//  Created by Andrew Constancio on 7/15/25.
-//
 import SwiftUI
 
 extension String {

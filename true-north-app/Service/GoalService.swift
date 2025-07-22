@@ -1,10 +1,3 @@
-//
-//  GoalService.swift
-//  true-north-app
-//
-//  Created by Andrew Constancio on 7/9/25.
-//
-
 import FirebaseFirestore
 import FirebaseAuth
 import SwiftUI

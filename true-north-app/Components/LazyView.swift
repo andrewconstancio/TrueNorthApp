@@ -1,10 +1,3 @@
-//
-//  LazyView.swift
-//  true-north-app
-//
-//  Created by Andrew Constancio on 7/8/25.
-//
-
 import SwiftUI
 
 struct LazyView<Content: View>: View {

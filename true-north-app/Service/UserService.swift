@@ -1,10 +1,3 @@
-//
-//  UserService.swift
-//  true-north-app
-//
-//  Created by Andrew Constancio on 7/2/25.
-//
-
 import Firebase
 import FirebaseAuth
 

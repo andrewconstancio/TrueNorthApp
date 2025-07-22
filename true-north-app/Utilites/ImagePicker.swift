@@ -1,10 +1,3 @@
-//
-//  ImagePicker.swift
-//  true-north-app
-//
-//  Created by Andrew Constancio on 7/1/25.
-//
-
 import SwiftUI
 
 struct ImagePicker: UIViewControllerRepresentable {

@@ -1,10 +1,3 @@
-//
-//  LoadingView.swift
-//  true-north-app
-//
-//  Created by Andrew Constancio on 7/9/25.
-//
-
 import SwiftUI
 
 struct LoadingView: View {

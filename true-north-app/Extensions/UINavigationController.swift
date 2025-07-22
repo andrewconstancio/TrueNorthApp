@@ -1,9 +1,3 @@
-//
-//  UINavigationController.swift
-//  true-north-app
-//
-//  Created by Andrew Constancio on 7/8/25.
-//
 import UIKit
 
 extension UINavigationController {

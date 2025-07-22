@@ -1,9 +1,3 @@
-//
-//  AppDelegate.swift
-//  true-north-app
-//
-//  Created by Andrew Constancio on 7/9/25.
-//
 import GoogleSignIn
 import FirebaseCore
 import FirebaseAuth

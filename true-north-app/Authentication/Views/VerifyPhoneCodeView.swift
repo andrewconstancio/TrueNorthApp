@@ -1,10 +1,3 @@
-//
-//  VerifyPhoneCodeView.swift
-//  true-north-app
-//
-//  Created by Andrew Constancio on 6/26/25.
-//
-
 import SwiftUI
 
 struct VerifyPhoneCodeView: View {

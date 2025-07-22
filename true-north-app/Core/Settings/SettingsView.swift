@@ -1,9 +1,3 @@
-//
-//  SettingsView.swift
-//  true-north-app
-//
-//  Created by Andrew Constancio on 7/7/25.
-//
 import SwiftUI
 
 struct SettingsView: View {

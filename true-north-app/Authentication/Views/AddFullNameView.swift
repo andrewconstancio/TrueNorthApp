@@ -1,10 +1,3 @@
-//
-//  AddFullNameView.swift
-//  true-north-app
-//
-//  Created by Andrew Constancio on 6/30/25.
-//
-
 import SwiftUI
 
 struct AddFullNameView: View {
