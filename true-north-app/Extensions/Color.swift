@@ -26,6 +26,27 @@ extension Color {
     }
 }
 
+extension UIColor {
+    var hexString: String? {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        guard getRed(&red, green: &green, blue: &blue, alpha: &alpha) else {
+            return nil
+        }
+
+        let r = Int(red * 255)
+        let g = Int(green * 255)
+        let b = Int(blue * 255)
+
+        return String(format: "#%02X%02X%02X", r, g, b)
+    }
+}
+
+extension Color {
+    func toHex() -> String? {
+        UIColor(self).hexString
+    }
+}
+
 extension Color {
     init(light: Color, dark: Color) {
         #if canImport(UIKit)

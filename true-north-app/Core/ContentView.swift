@@ -32,7 +32,11 @@ enum NavigationDestination: String, CaseIterable {
 
 // MARK: - Content View
 struct ContentView: View {
+    
+    /// Auth environment view model
     @EnvironmentObject private var viewModel: AuthViewModel
+    
+    /// Navigation state path for this view
     @State private var path = NavigationPath()
     
     var body: some View {
@@ -48,10 +52,8 @@ struct ContentView: View {
             }
         }
     }
-}
-
-// MARK: - View Components
-private extension ContentView {
+    
+    /// Authication flow for the main view..
     var authenticationFlow: some View {
         NavigationStack(path: $path) {
             LoginView()
@@ -59,6 +61,7 @@ private extension ContentView {
         }
     }
     
+    /// User profile set up for the main view.
     var profileSetupFlow: some View {
         NavigationStack(path: $path) {
             AddFullNameView()
@@ -66,6 +69,7 @@ private extension ContentView {
         }
     }
     
+    /// Main content view for this app.
     var mainInterfaceView: some View {
         MainTabView()
             .accentColor(.primary)

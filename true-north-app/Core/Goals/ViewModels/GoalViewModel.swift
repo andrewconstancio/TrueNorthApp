@@ -12,9 +12,10 @@ class GoalViewModel: ObservableObject {
     @Published var userGoals: [Goal] = []
     private let service = GoalService()
     
-    func saveGoal(title: String, description: String, term: String) async throws {
+    func saveGoal(title: String, description: String, term: String, endDate: Date, category: String, selectedColor: Color) async throws {
         do {
-            try await service.saveGoal(title: title, description: description, term: term)
+            guard let color = selectedColor.toHex() else { return }
+            try await service.saveGoal(title: title, description: description, term: term, endDate: endDate, color: color)
         } catch {
             throw error
         }

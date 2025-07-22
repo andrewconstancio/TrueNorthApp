@@ -15,6 +15,7 @@ struct Goal: Identifiable, Codable {
     var dateCreated: Timestamp
     var complete: Bool
     var uid: String
+    var color: String
     
     init?(from data: [String: Any], id: String) {
         guard let title = data["title"] as? String,
@@ -22,7 +23,8 @@ struct Goal: Identifiable, Codable {
               let term = data["term"] as? String,
               let dateCreated = data["dateCreated"] as? Timestamp,
               let complete = data["complete"] as? Bool,
-              let uid = data["uid"] as? String else {
+              let uid = data["uid"] as? String,
+              let color = data["color"] as? String else {
             return nil
         }
 
@@ -33,6 +35,7 @@ struct Goal: Identifiable, Codable {
         self.dateCreated = dateCreated
         self.complete = complete
         self.uid = uid
+        self.color = color
     }
     
     init(id: String = UUID().uuidString,
@@ -41,7 +44,8 @@ struct Goal: Identifiable, Codable {
          term: String,
          dateCreated: Timestamp,
          complete: Bool,
-         uid: String) {
+         uid: String,
+         color: String) {
         self.id = id
         self.title = title
         self.description = description
@@ -49,6 +53,7 @@ struct Goal: Identifiable, Codable {
         self.dateCreated = dateCreated
         self.complete = complete
         self.uid = uid
+        self.color = color
     }
     
     static let dummy = Goal(
@@ -58,6 +63,7 @@ struct Goal: Identifiable, Codable {
         term: "Short Term",
         dateCreated: Timestamp(date: Date()),
         complete: false,
-        uid: "testUser123"
+        uid: "testUser123",
+        color: "#09FFE5"
     )
 }

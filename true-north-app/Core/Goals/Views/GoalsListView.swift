@@ -1,21 +1,43 @@
-//
-//  GoalsListView.swift
-//  true-north-app
-//
-//  Created by Andrew Constancio on 6/24/25.
-//
-
 import SwiftUI
 import Kingfisher
 
 // MARK: Main View
 
 struct GoalsListView: View {
+    
+    /// Auth environment view model
     @EnvironmentObject var viewModel: AuthViewModel
+    
+    /// The selected date. Default its the current date.
     @State private var selectedDate = Date()
+    
+    /// Show sign out activity alert.
     @State private var showingSignOutAlert = false
+    
+    /// The navigation path for the main views.
     @State private var path: NavigationPath = .init()
+    
+    /// The goal view model to handle all business logic.
     @StateObject private var goalViewModel = GoalViewModel()
+    
+    var allDates: [Date] {
+       let calendar = Calendar.current
+       let today = Date()
+       return (-365...3).compactMap { dayOffset in
+           calendar.date(byAdding: .day, value: dayOffset, to: today)
+       }
+    }
+    
+    var todayIndex: Int {
+        let calendar = Calendar.current
+        let today = Date()
+        return allDates.firstIndex { calendar.isDate($0, inSameDayAs: today) } ?? 365
+    }
+    
+    var selectedIndex: Int {
+        let calendar = Calendar.current
+        return allDates.firstIndex { calendar.isDate($0, inSameDayAs: selectedDate) } ?? 365
+    }
     
     var body: some View {
         NavigationStack(path: $path) {
@@ -39,8 +61,7 @@ struct GoalsListView: View {
                 .padding()
                 
                 // Show add button for
-                floatingActionButton
-                    .padding()
+                floatingActionButton.padding()
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -56,8 +77,6 @@ struct GoalsListView: View {
             .onAppear {
                 Task {
                     try? await goalViewModel.fetchGoals(for: selectedDate)
-                    let impact = UIImpactFeedbackGenerator(style: .medium)
-                    impact.impactOccurred()
                 }
             }
             .alert("Sign Out", isPresented: $showingSignOutAlert) {
@@ -82,11 +101,7 @@ struct GoalsListView: View {
             }
         }
     }
-}
-
-// MARK: UI Components
-
-extension GoalsListView {
+    
     private var headerView: some View {
         HStack {
             if let user = viewModel.currentUser {
@@ -114,6 +129,7 @@ extension GoalsListView {
                        ) {
                            selectedDate = date
                            
+                           // Fetch goal data for the date
                            Task {
                                do {
                                    try await goalViewModel.fetchGoals(for: date)
@@ -144,12 +160,14 @@ extension GoalsListView {
     }
     
     private var goalsListView: some View {
-        List(goalViewModel.userGoals.indices, id: \.self) { index in
-           GoalRowView(
-                goal: goalViewModel.userGoals[index],
-                goalIndex: index,
-                selectedDate: selectedDate
-           )
+        List {
+            ForEach(goalViewModel.userGoals.indices, id: \.self) { index in
+                GoalRowView(
+                    goal: goalViewModel.userGoals[index],
+                    goalIndex: index,
+                    selectedDate: selectedDate
+                )
+            }
         }
         .listStyle(.plain)
     }
@@ -186,7 +204,7 @@ extension GoalsListView {
     
     private var floatingActionButton: some View {
         NavigationLink(value: "GoalsEditView") {
-            Image(systemName: "plus")
+            Image(systemName: "pencil")
                 .font(.title2.weight(.semibold))
                 .foregroundColor(.white)
                 .frame(width: 56, height: 56)
@@ -197,29 +215,6 @@ extension GoalsListView {
                 )
         }
      }
-}
-
-// MARK: Helper functions
-
-extension GoalsListView {
-    var allDates: [Date] {
-       let calendar = Calendar.current
-       let today = Date()
-       return (-365...3).compactMap { dayOffset in
-           calendar.date(byAdding: .day, value: dayOffset, to: today)
-       }
-    }
-    
-    var todayIndex: Int {
-        let calendar = Calendar.current
-        let today = Date()
-        return allDates.firstIndex { calendar.isDate($0, inSameDayAs: today) } ?? 365
-    }
-    
-    var selectedIndex: Int {
-        let calendar = Calendar.current
-        return allDates.firstIndex { calendar.isDate($0, inSameDayAs: selectedDate) } ?? 365
-    }
     
     private func isDateInFuture(_ date: Date) -> Bool {
         let calendar = Calendar.current

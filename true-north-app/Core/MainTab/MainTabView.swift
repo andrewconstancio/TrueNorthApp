@@ -11,7 +11,10 @@ enum Tab: Hashable {
 }
 
 struct MainTabView: View {
+    /// Auth environment view model
     @EnvironmentObject var viewModel: AuthViewModel
+    
+    /// Selectd tab
     @State private var selectedTab: Tab = .home
 
     var body: some View {

@@ -42,7 +42,7 @@ struct GoalRowView: View {
                     VStack(alignment: .leading) {
                         Text(goal.title)
                             .font(.headline)
-                            .foregroundStyle(goalRowViewModel.didComplete ? .primary : .secondary)
+                            .foregroundStyle(goalRowViewModel.didComplete ? .primary : .tertiary)
 
                         Text(goal.description)
                             .font(.subheadline)
@@ -54,7 +54,7 @@ struct GoalRowView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
              RoundedRectangle(cornerRadius: 12)
-                 .fill(Color(.systemGray6))
+                .fill(goalRowViewModel.didComplete ? Color(hex: goal.color.hexToInt!).opacity(0.6) : Color(hex: goal.color.hexToInt!).opacity(0.4))
             )
             .padding(.vertical, 4)
         }

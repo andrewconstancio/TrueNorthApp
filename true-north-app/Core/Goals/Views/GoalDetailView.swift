@@ -1,10 +1,3 @@
-//
-//  GoalDetailView.swift
-//  true-north-app
-//
-//  Created by Andrew Constancio on 7/8/25.
-//
-
 import SwiftUI
 
 struct GoalDetailView: View {
@@ -22,8 +15,6 @@ struct GoalDetailView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Spacer()
-            
             ZStack(alignment: .topLeading) {
                 Text(goal.title)
                     .font(.largeTitle)
@@ -120,6 +111,9 @@ struct GoalDetailView: View {
     }
 }
 
-//#Preview {
-//    GoalDetailView(goal: Goal.dummy)
-//}
+#Preview {
+    GoalDetailView(
+        goal: Goal.dummy,
+        goalViewModel: GoalViewModel()
+    )
+}

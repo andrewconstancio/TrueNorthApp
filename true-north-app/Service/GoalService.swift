@@ -7,10 +7,10 @@
 
 import FirebaseFirestore
 import FirebaseAuth
-
+import SwiftUI
 
 struct GoalService {
-    func saveGoal(title: String, description: String, term: String) async throws {
+    func saveGoal(title: String, description: String, term: String, endDate: Date, color: String) async throws {
         guard let uid = Auth.auth().currentUser?.uid else {
             return
         }
@@ -19,7 +19,9 @@ struct GoalService {
                         "description": description,
                         "term": term,
                         "dateCreated": Timestamp(date: Date()),
+                        "endDate": Timestamp(date: endDate),
                         "complete": false,
+                        "color": color,
                         "uid": uid] as [String : Any]
         
         do {

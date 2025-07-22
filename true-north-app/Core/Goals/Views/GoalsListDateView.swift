@@ -46,6 +46,10 @@ struct GoalsListDateView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(borderColor, lineWidth: isSelected ? 0 : 1)
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.pink, lineWidth: Calendar.current.isDateInToday(date) && !isSelected ? 1 : 0)
+            )
         }
         .buttonStyle(PlainButtonStyle())
         .disabled(isFuture)
