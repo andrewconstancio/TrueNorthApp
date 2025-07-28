@@ -1,3 +1,5 @@
+import SwiftUI
+
 /// ViewModifier for styling form sections with padding, background, and corner radius
 struct FormSection: ViewModifier {
     var tintColor: Color
