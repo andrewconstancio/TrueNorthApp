@@ -7,11 +7,16 @@ struct SettingsView: View {
     }
     
     var body: some View {
-        VStack {
-            Text("Settings View")
-        }
-        .onAppear {
-            print("init settings")
+        Form {
+            Section {
+                Button {
+                    
+                } label: {
+                    Text("Hello")
+                }
+            } header: {
+                Text("Private Policy")
+            }
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)

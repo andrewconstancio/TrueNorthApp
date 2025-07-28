@@ -1,12 +1,14 @@
 import SwiftUI
 import Kingfisher
 
-// MARK: Main View
-
+/// The main goals list view..
+///
 struct GoalsListView: View {
-    
-    /// Auth environment view model
+    /// Auth environment view model.
     @EnvironmentObject var viewModel: AuthViewModel
+    
+    /// Goal environment view model.
+    @EnvironmentObject var goalViewModel: GoalViewModel
     
     /// The selected date. Default its the current date.
     @State private var selectedDate = Date()
@@ -14,12 +16,7 @@ struct GoalsListView: View {
     /// Show sign out activity alert.
     @State private var showingSignOutAlert = false
     
-    /// The navigation path for the main views.
-    @State private var path: NavigationPath = .init()
-    
-    /// The goal view model to handle all business logic.
-    @StateObject private var goalViewModel = GoalViewModel()
-    
+    /// All of the dates to show in the date list.
     var allDates: [Date] {
        let calendar = Calendar.current
        let today = Date()
@@ -28,28 +25,26 @@ struct GoalsListView: View {
        }
     }
     
+    /// Get the current day index in the list of all the dates.
     var todayIndex: Int {
         let calendar = Calendar.current
         let today = Date()
         return allDates.firstIndex { calendar.isDate($0, inSameDayAs: today) } ?? 365
     }
     
+    /// Get the index of the selected date.
     var selectedIndex: Int {
         let calendar = Calendar.current
         return allDates.firstIndex { calendar.isDate($0, inSameDayAs: selectedDate) } ?? 365
     }
     
     var body: some View {
-        NavigationStack(path: $path) {
             ZStack(alignment: .bottomTrailing) {
                 VStack {
-                    // Header
                     headerView
                     
-                    // Day selector
                     datePickerView
                     
-                    // Goals list
                     if goalViewModel.userGoals.isEmpty {
                         Text("No Goals Set")
                             .fontWeight(.bold)
@@ -59,8 +54,6 @@ struct GoalsListView: View {
                     Spacer()
                 }
                 .padding()
-                
-                // Show add button for
                 floatingActionButton.padding()
             }
             .toolbar {
@@ -85,23 +78,9 @@ struct GoalsListView: View {
             } message: {
                Text("Are you sure you want to sign out?")
             }
-            .navigationDestination(for: String.self) { string in
-                switch string {
-                case "GoalsEditView":
-                    GoalsEditView(goalViewModel: goalViewModel)
-                default:
-                    Text("No view has been set for \(string)")
-                }
-            }
-            .navigationDestination(for: Int.self) { value in
-                GoalDetailView(
-                    goal: goalViewModel.userGoals[value],
-                    goalViewModel: goalViewModel
-                )
-            }
-        }
     }
-    
+
+    /// The header.
     private var headerView: some View {
         HStack {
             if let user = viewModel.currentUser {
@@ -117,6 +96,7 @@ struct GoalsListView: View {
         }
     }
     
+    /// The date picker.
     private var datePickerView: some View {
         ScrollViewReader { proxy in
            ScrollView(.horizontal, showsIndicators: false) {
@@ -147,7 +127,7 @@ struct GoalsListView: View {
                let impact = UIImpactFeedbackGenerator(style: .soft)
                impact.impactOccurred()
            }
-           .frame(height: 60)
+           .frame(height: 80)
            .onAppear {
                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                    withAnimation(.easeInOut(duration: 0.5)) {
@@ -159,6 +139,7 @@ struct GoalsListView: View {
        .padding(.vertical, 10)
     }
     
+    /// The list of the users goals.
     private var goalsListView: some View {
         List {
             ForEach(goalViewModel.userGoals.indices, id: \.self) { index in
@@ -170,8 +151,12 @@ struct GoalsListView: View {
             }
         }
         .listStyle(.plain)
+        .refreshable {
+            try? await goalViewModel.fetchGoals(for: selectedDate)
+        }
     }
     
+    /// The profile picture button.
     private var profileButton: some View {
          Group {
              if let user = viewModel.currentUser,
@@ -200,14 +185,15 @@ struct GoalsListView: View {
                  }
              }
          }
-     }
+    }
     
+    /// The add a new goal floating button.
     private var floatingActionButton: some View {
         NavigationLink(value: "GoalsEditView") {
             Image(systemName: "pencil")
                 .font(.title2.weight(.semibold))
                 .foregroundColor(.white)
-                .frame(width: 56, height: 56)
+                .frame(width: 62, height: 62)
                 .background(
                     Circle()
                         .fill(Color.pink)
@@ -216,12 +202,16 @@ struct GoalsListView: View {
         }
      }
     
+    // MARK: Private functions.
+    
+    /// Check if a date is in the future.
     private func isDateInFuture(_ date: Date) -> Bool {
         let calendar = Calendar.current
         let today = Date()
         return calendar.compare(date, to: today, toGranularity: .day) == .orderedDescending
     }
     
+    /// Format a date.
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .long

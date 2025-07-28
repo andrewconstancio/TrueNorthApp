@@ -31,4 +31,12 @@ class GoalViewModel: ObservableObject {
             throw error
         }
     }
+    
+    func deleteGoalAndHistory(for goalId: String) async throws {
+        do {
+            try await service.deleteGoalAndHistory(for: goalId)
+        } catch {
+            throw error
+        }
+    }
 }

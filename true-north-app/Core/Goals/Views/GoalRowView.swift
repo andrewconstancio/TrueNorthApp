@@ -2,6 +2,7 @@
 import SwiftUI
 
 struct GoalRowView: View {
+    @State private var animateBorder = false
     let goal: Goal
     let goalIndex: Int
     let selectedDate: Date
@@ -16,49 +17,59 @@ struct GoalRowView: View {
     
     var body: some View {
         ZStack {
-            NavigationLink(value: goalIndex) {
-                EmptyView()
+            // Animated glowing border
+            if !goalRowViewModel.didComplete {
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.indigo.opacity(0.7), lineWidth: 3)
+                    .scaleEffect(animateBorder ? 1 : 0.97)
+                    .opacity(animateBorder ? 0.3 : 0.8)
+                    .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: animateBorder)
+    
             }
-            .opacity(0)
-            
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Image(systemName: "mappin")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 16, height: 16)
-                        .foregroundColor(.black)
-                        .padding(8)
-                        .background(Color(.systemYellow))
-                        .frame(width: 32, height: 32)
-                        .clipShape(Circle())
-                    
-                    VStack(alignment: .leading) {
-                        Text(goal.title)
-                            .font(.headline)
-                            .foregroundStyle(goalRowViewModel.didComplete ? .primary : .tertiary)
 
-                        Text(goal.description)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+            // Your existing card content
+            ZStack {
+                NavigationLink(value: goalIndex) {
+                    EmptyView()
+                }
+                .opacity(0)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(goal.title)
+                                .font(.headline)
+                                .foregroundStyle(goalRowViewModel.didComplete ? .primary : .tertiary)
+
+                            Text(goal.description)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(goalRowViewModel.didComplete ? Color(hex: goal.color.hexToInt!).opacity(0.6) : Color(hex: goal.color.hexToInt!).opacity(0.4))
+                )
+                .padding(.horizontal, 4)
             }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-             RoundedRectangle(cornerRadius: 12)
-                .fill(goalRowViewModel.didComplete ? Color(hex: goal.color.hexToInt!).opacity(0.6) : Color(hex: goal.color.hexToInt!).opacity(0.4))
-            )
-            .padding(.vertical, 4)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets())
+        }
+        .onAppear {
+            animateBorder = true
         }
         .listRowSeparator(.hidden)
-        .listRowInsets(EdgeInsets())
+        .listRowInsets(EdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5))
     }
 }
 
-//#Preview {
-//    GoalRowView(
-//        goal: Goal(title: "Test Goal" as? , description: "This is a test goal.")
-//    )
-//}
+#Preview {
+    GoalRowView(
+        goal: .dummy,
+        goalIndex: 0,
+        selectedDate: Date()
+    )
+}

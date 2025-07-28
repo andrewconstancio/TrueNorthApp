@@ -1,41 +1,43 @@
 import SwiftUI
 
-struct FormSection: ViewModifier {
-    var tintColor: Color
-    
-    func body(content: Content) -> some View {
-        content
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(
-              ZStack {
-                  RoundedRectangle(cornerRadius: 12, style: .continuous)
-                      .fill(.ultraThinMaterial)
-                  RoundedRectangle(cornerRadius: 12, style: .continuous)
-                      .fill(tintColor.opacity(0.2))
-              }
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
-}
-
 struct GoalsEditView: View {
+    /// ViewModel for handling goal data
     @ObservedObject var goalViewModel: GoalViewModel
-    
+
+    /// The goals name text.
     @State private var goalName: String = ""
+    
+    /// The goals description text.
     @State private var goalDescription: String = ""
-    @State private var selectedTerm: GoalTerm = .short
+    
+    /// The selected category of the goal.
     @State private var category: String = "Personal"
+    
+    /// The start date of the goal.
     @State private var startDate: Date = Date()
+    
+    /// If the goal does not have a end date.
+    @State private var endlessGoal: Bool = false
+    
+    /// The end date of the goal.
     @State private var endDate: Date = Calendar.current.date(byAdding: .day, value: 30, to: Date())!
-    @State private var emoji: String = "🎯"
+    
+    /// The theme goal of the goal.
     @State private var selectedColor: Color = .blue
     
+    /// The selected term of the goal.
+    @State private var selectedTerm: GoalTerm = .medium
+
+    /// Focus state for managing keyboard behavior
     @FocusState private var isDescriptionFocused: Bool
+    
+    /// Dismisses the view when called
     @Environment(\.dismiss) var dismiss
-    
+
+    /// Available categories
     let categories = ["Personal", "Health", "Career", "Fitness", "Education", "Finance"]
-    
+
+    /// Enum representing goal duration with associated colors.
     enum GoalTerm: String, CaseIterable {
         case short = "Short"
         case medium = "Medium"
@@ -49,27 +51,26 @@ struct GoalsEditView: View {
             }
         }
     }
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
                 goalInputSection
                 targetDate
                 type
-                termSelectionSection
-                colorSelction
                 Spacer(minLength: 50)
             }
             .padding()
         }
-        .navigationTitle("Edit Goal")
+        .navigationTitle("Add Goal")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
         .toolbar {
-            toolbarSaveButton
+            toolbarSaveButton // Save button in top-right corner
         }
     }
-    
+
+    /// Section for goal title and description.
     private var goalInputSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             TextField("Goal Name", text: $goalName)
@@ -81,19 +82,21 @@ struct GoalsEditView: View {
             
             descriptionEditor
         }
-        .padding(16)
+        .padding(2)
         .modifier(FormSection(tintColor: selectedColor))
     }
-    
+
+    /// Custom TextEditor with placeholder for description.
     private var descriptionEditor: some View {
         ZStack(alignment: .topLeading) {
+            // Placeholder
             if goalDescription.isEmpty && !isDescriptionFocused {
                 Text("Description")
                     .bold()
                     .foregroundColor(Color.primary.opacity(0.2))
                     .padding(.top, 7)
             }
-            
+
             TextEditor(text: $goalDescription)
                 .focused($isDescriptionFocused)
                 .scrollContentBackground(.hidden)
@@ -101,22 +104,42 @@ struct GoalsEditView: View {
                 .accessibilityLabel("Goal description")
         }
     }
-    
+
+    /// Section to select the goal's target date.
     private var targetDate: some View {
-        HStack {
-            Text("Target Date")
-                .fontWeight(.bold)
-            Spacer()
-            DatePicker("", selection: $endDate, displayedComponents: .date)
+        
+        VStack(alignment: .trailing, spacing: 20) {
+            HStack {
+                Text("Target Date")
+                    .fontWeight(.bold)
+                Spacer()
+                DatePicker("", selection: $endDate, displayedComponents: .date)
+            }
+            
+            Button {
+                endlessGoal.toggle()
+            } label: {
+                Text("Endless")
+                    .fontWeight(.bold)
+                    .padding(8)
+                    .background(
+                         RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.indigo.opacity(endlessGoal ? 0.9 : 0.2))
+                     )
+                     .overlay(
+                          RoundedRectangle(cornerRadius: 12)
+                             .stroke(Color.indigo, lineWidth: 1)
+                     )
+            }
         }
         .modifier(FormSection(tintColor: selectedColor))
     }
-    
+
+    /// Section to choose a goal category.
     private var type: some View {
         HStack {
             Text("Type")
                 .fontWeight(.bold)
-            
             Spacer()
             Picker("Category", selection: $category) {
                 ForEach(categories, id: \.self) {
@@ -127,7 +150,8 @@ struct GoalsEditView: View {
         }
         .modifier(FormSection(tintColor: selectedColor))
     }
-    
+
+    /// Section to select goal term (short, medium, long)
     private var termSelectionSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("What's the term of this goal?")
@@ -142,18 +166,19 @@ struct GoalsEditView: View {
         }
         .modifier(FormSection(tintColor: selectedColor))
     }
-    
+
+    /// Section for color selection.
     private var colorSelction: some View {
         HStack {
             Text("Color")
                 .fontWeight(.bold)
-            
             Spacer()
             ColorPicker("", selection: $selectedColor)
         }
         .modifier(FormSection(tintColor: selectedColor))
     }
-    
+
+    /// Button used to select a term with animated visual feedback.
     private func termButton(for term: GoalTerm) -> some View {
         Button {
             selectedTerm = term
@@ -180,11 +205,11 @@ struct GoalsEditView: View {
         .accessibilityLabel("\(term.rawValue) term")
         .accessibilityHint("Select \(term.rawValue) term for this goal")
     }
-    
+
+    /// Save button in toolbar that triggers save logic and dismisses the view.
     private var toolbarSaveButton: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Button("Save") {
-                // Save the goal
                 Task {
                     do {
                         try await goalViewModel.saveGoal(
@@ -195,9 +220,7 @@ struct GoalsEditView: View {
                             category: category,
                             selectedColor: selectedColor
                         )
-                        
-                        // Dismiss the view
-                        dismiss()
+                        dismiss() // Close the view on successful save
                     } catch {
                         print(error.localizedDescription)
                     }

@@ -20,30 +20,36 @@ struct GoalsListDateView: View {
     
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 4) {
-                Text(dayFormatter.string(from: date))
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(foregroundColor(for: .secondary))
-                
-                Text(dayNumber)
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(foregroundColor(for: .primary))
+            VStack(alignment: .center, spacing: 4) {
+                Circle()
+                    .stroke(Color.blue, lineWidth: 1)
+                    .frame(width: 8, height: 8)
+             
+                VStack(spacing: 4) {
+                    Text(dayFormatter.string(from: date))
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(foregroundColor(for: .secondary))
+                    
+                    Text(dayNumber)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(foregroundColor(for: .primary))
+                }
+                .frame(width: 44, height: 65)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(backgroundColor)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(borderColor, lineWidth: isSelected ? 0 : 1)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.pink, lineWidth: Calendar.current.isDateInToday(date) ? 1 : 0)
+                )
             }
-            .frame(width: 44, height: 60)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(backgroundColor)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(borderColor, lineWidth: isSelected ? 0 : 1)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.pink, lineWidth: Calendar.current.isDateInToday(date) && !isSelected ? 1 : 0)
-            )
         }
         .buttonStyle(PlainButtonStyle())
         .disabled(isFuture)

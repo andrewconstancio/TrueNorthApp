@@ -95,4 +95,24 @@ struct GoalService {
             throw TNError.generalError
         }
     }
+    
+    func deleteGoalAndHistory(for goalId: String) async throws {
+        
+        // Delete the goal
+        try await Firestore.firestore().collection("goals").document(goalId).delete()
+        
+        // Delete the updates made from the user on the goal
+        do {
+            let snapshot = try await Firestore.firestore()
+                .collection("userGoalUpdates")
+                .whereField("goalId", isEqualTo: goalId)
+                .getDocuments()
+
+            for document in snapshot.documents {
+                try await document.reference.delete()
+            }
+        } catch {
+            throw TNError.generalError
+        }
+    }
 }
