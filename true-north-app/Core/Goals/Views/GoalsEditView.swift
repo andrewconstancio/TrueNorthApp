@@ -37,7 +37,7 @@ struct GoalsEditView: View {
     /// Available categories
     let categories = ["Personal", "Health", "Career", "Fitness", "Education", "Finance"]
 
-    /// Enum representing goal duration with associated colors.
+    /// An enumeration representing goal duration with associated colors.
     enum GoalTerm: String, CaseIterable {
         case short = "Short"
         case medium = "Medium"

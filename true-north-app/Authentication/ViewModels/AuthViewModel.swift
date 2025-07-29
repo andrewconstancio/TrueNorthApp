@@ -48,8 +48,6 @@ class AuthViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Check User Account
-    
     func checkIfUserNeedsProfileSetup() async {
         defer { self.isLoading = false } // Always set loading to false when done
         
@@ -170,63 +168,4 @@ class AuthViewModel: ObservableObject {
             throw TNError.generalError
         }
     }
-
-    @Published var verificationID: String?
-    @Published var verificationSent = false
-    @Published var phoneCredential: PhoneAuthCredential?
-    @Published var credentialValid = false
 }
-
-extension AuthViewModel {
-    
-    // MARK: - Register phone number
-    
-    func registerPhoneNumber(phoneNumber: String) async throws {
-        
-        let numbersOnly = phoneNumber.filter { $0.isNumber }
-        let number = "+1\(numbersOnly)"
-        
-        do {
-            verificationID = try await PhoneAuthProvider.provider().verifyPhoneNumber(number)
-            verificationSent = true
-        } catch {
-            throw TNError.generalError
-        }
-    }
-    
-    // MARK: - Verify OPT code
-    
-    func verifyOPTCode(verificationCode: String) async throws {
-        
-        guard let verificationID = self.verificationID else {
-            throw TNError.generalError
-        }
-        
-        let credential = PhoneAuthProvider.provider().credential(withVerificationID: verificationID, verificationCode: verificationCode)
-        
-        do {
-            try await Auth.auth().signIn(with: credential)
-            phoneCredential = credential
-        } catch {
-            throw TNError.generalError
-        }
-    }
-    
-    // MARK: - format the phone number
-
-    func formatUSPhoneNumber(_ number: String) -> String {
-        // Extract digits only
-        let digits = number.filter { $0.isWholeNumber }
-
-        // Ensure exactly 10 digits for local US number
-        guard digits.count == 10 else {
-            return number // fallback: return unformatted if not 10 digits
-        }
-
-        let areaCode = digits.prefix(3)
-        let middle = digits.dropFirst(3).prefix(3)
-        let last = digits.suffix(4)
-
-        return "+1\(areaCode)\(middle)\(last)"
-    }
-} 

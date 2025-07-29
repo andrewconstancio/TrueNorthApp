@@ -6,31 +6,23 @@ struct GoalsListDateView: View {
     let isFuture: Bool
     let onTap: () -> Void
     
-    private var dayFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "E" // Abbreviated day name (Mon, Tue, etc.)
-        return formatter
-    }
-    
-    private var dayNumber: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d" // Day number
-        return formatter.string(from: date)
-    }
-    
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .center, spacing: 4) {
+                
+                // Goals completed indicator
                 Circle()
                     .stroke(Color.blue, lineWidth: 1)
                     .frame(width: 8, height: 8)
              
                 VStack(spacing: 4) {
+                    // The day name
                     Text(dayFormatter.string(from: date))
                         .font(.caption)
                         .fontWeight(.medium)
                         .foregroundColor(foregroundColor(for: .secondary))
                     
+                    // The day number
                     Text(dayNumber)
                         .font(.headline)
                         .fontWeight(.semibold)
@@ -55,6 +47,24 @@ struct GoalsListDateView: View {
         .disabled(isFuture)
     }
     
+    
+    // MARK: Private functions
+    
+    /// Day formatter
+    private var dayFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "E"
+        return formatter
+    }
+    
+    /// Day number
+    private var dayNumber: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d"
+        return formatter.string(from: date)
+    }
+    
+    /// Date foreground color
     private func foregroundColor(for baseColor: Color) -> Color {
         if isFuture {
             return Color.gray.opacity(0.4)
@@ -65,6 +75,7 @@ struct GoalsListDateView: View {
         }
     }
     
+    /// Date background color
     private var backgroundColor: Color {
         if isFuture {
             return Color.gray.opacity(0.1)

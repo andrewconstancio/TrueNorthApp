@@ -38,5 +38,3 @@ struct ImageUploader {
         return downloadURL
     }
 }
-
-
