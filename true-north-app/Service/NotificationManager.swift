@@ -41,23 +41,6 @@ class NotificationManager: ObservableObject {
         }
     }
     
-    private func getFCMToken() async {
-        do {
-            let token = try await Messaging.messaging().token()
-            fcmToken = token
-            print("FCM Token retrieved: \(token)")
-        } catch {
-            print("Error getting FCM token: \(error)")
-        }
-    }
-    
-    // Call this method from your AppDelegate when APNS registration succeeds
-    func onAPNSRegistrationSuccess() {
-        Task {
-            await getFCMToken()
-        }
-    }
-    
     func sendLocalNotification(title: String, body: String, timeInterval: TimeInterval = 5) {
         let content = UNMutableNotificationContent()
         content.title = title
