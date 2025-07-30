@@ -5,8 +5,8 @@ enum Tab: Hashable {
 }
 
 struct MainTabView: View {
-    /// Auth environment view model
-    @EnvironmentObject var viewModel: AuthViewModel
+    /// The goal view model to handle all business logic.
+    @StateObject private var goalViewModel = GoalViewModel()
     
     /// Selected tab
     @State private var selectedTab: Tab = .home
@@ -14,9 +14,9 @@ struct MainTabView: View {
     /// The navigation path for the main views.
     @State private var path: NavigationPath = .init()
     
-    /// The goal view model to handle all business logic.
-    @StateObject private var goalViewModel = GoalViewModel()
-
+    /// Auth environment view model
+    @EnvironmentObject var viewModel: AuthViewModel
+    
     var body: some View {
         NavigationStack(path: $path) {
             TabView(selection: $selectedTab) {

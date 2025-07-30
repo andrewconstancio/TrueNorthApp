@@ -13,6 +13,7 @@
 		1C05F7E02E148DCB00F52C65 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 1C05F7DF2E148DCB00F52C65 /* GoogleSignIn */; };
 		1C05F7E22E148DCB00F52C65 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 1C05F7E12E148DCB00F52C65 /* GoogleSignInSwift */; };
 		1C0C182A2E32CE8800CC888C /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 1C0C18292E32CE8800CC888C /* Lottie */; };
+		1C0C1D9D2E39606900CC888C /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 1C0C1D9C2E39606900CC888C /* FirebaseMessaging */; };
 		1C0DC0C52E1C09B400F3A22E /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 1C0DC0C42E1C09B400F3A22E /* Kingfisher */; };
 /* End PBXBuildFile section */
 
@@ -75,6 +76,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1C0C1D9D2E39606900CC888C /* FirebaseMessaging in Frameworks */,
 				1C0DC0C52E1C09B400F3A22E /* Kingfisher in Frameworks */,
 				1C0C182A2E32CE8800CC888C /* Lottie in Frameworks */,
 				1C05F7E22E148DCB00F52C65 /* GoogleSignInSwift in Frameworks */,
@@ -149,6 +151,7 @@
 				1C05F7E12E148DCB00F52C65 /* GoogleSignInSwift */,
 				1C0DC0C42E1C09B400F3A22E /* Kingfisher */,
 				1C0C18292E32CE8800CC888C /* Lottie */,
+				1C0C1D9C2E39606900CC888C /* FirebaseMessaging */,
 			);
 			productName = "true-north-app";
 			productReference = 1C05F3092E04803A00F52C65 /* true-north-app.app */;
@@ -445,6 +448,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "true-north-app/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "True North";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -458,9 +462,13 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.kuma.true-north-app";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -476,6 +484,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "true-north-app/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "True North";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -489,9 +498,13 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.kuma.true-north-app";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -673,6 +686,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1C0C18282E32CE8800CC888C /* XCRemoteSwiftPackageReference "lottie-ios" */;
 			productName = Lottie;
+		};
+		1C0C1D9C2E39606900CC888C /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1C05F33A2E04885B00F52C65 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 		1C0DC0C42E1C09B400F3A22E /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;

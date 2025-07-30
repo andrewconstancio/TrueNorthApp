@@ -16,6 +16,9 @@ struct GoalsListView: View {
     /// Show sign out activity alert.
     @State private var showingSignOutAlert = false
     
+    /// The notification environment object.
+    @EnvironmentObject var notificationManager: NotificationManager
+    
     /// All of the dates to show in the date list.
     var allDates: [Date] {
        let calendar = Calendar.current
@@ -51,6 +54,7 @@ struct GoalsListView: View {
                     } else {
                         goalsListView
                     }
+                    
                     Spacer()
                 }
                 .padding()
