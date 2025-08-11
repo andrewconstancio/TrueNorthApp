@@ -3,40 +3,29 @@ import Firebase
 import FirebaseAuth
 
 class GoalViewModel: ObservableObject {
-    @Published var userGoals: [Goal] = []
+    /// A array of the users goals
+    @Published var goals: [Goal] = []
+    
+    /// The selected date. 
+    @Published var selectedDate: Date = Date()
+    
+    /// Goals service.
     private let service = GoalService()
     
-    func saveGoal(title: String, description: String, term: String, endDate: Date, category: String, selectedColor: Color) async throws {
-        do {
-            guard let color = selectedColor.toHex() else { return }
-            try await service.saveGoal(title: title, description: description, term: term, endDate: endDate, color: color)
-        } catch {
-            throw error
+    /// Fetch the goals of the user for a specfic date.
+    func fetchGoals() async throws {
+        let goals = try await service.fetchGoals(for: selectedDate)
+        
+        await MainActor.run {
+            self.goals = goals
         }
     }
     
-    @MainActor
-    func fetchGoals(for selectedDate : Date) async throws {
-        do {
-            self.userGoals = try await service.fetchGoals(for: selectedDate)
-        } catch {
-            throw error
-        }
-    }
-    
-    func saveProgress(for goalId: String) async throws {
-        do {
-            try await service.saveProgress(for: goalId)
-        } catch {
-            throw error
-        }
-    }
-    
-    func deleteGoalAndHistory(for goalId: String) async throws {
-        do {
-            try await service.deleteGoalAndHistory(for: goalId)
-        } catch {
-            throw error
-        }
+    /// Handles sending the phone number for auth.
+    ///
+    /// - Parameter Goal: A new goal created by the user.
+    ///
+    func saveGoal(_ goal: Goal) async throws {
+        try await service.saveGoal(goal)
     }
 }

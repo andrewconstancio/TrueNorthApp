@@ -5,167 +5,165 @@ import GoogleSignIn
 
 @MainActor
 class AuthViewModel: ObservableObject {
-    /// Current user object
-    @Published var currentUser: User?
+    /// Current authentication state.
+    @Published var authState: AuthState = .loading
     
-    /// User session
-    @Published var userSession: FirebaseAuth.User?
+    /// Profile setup data.
+    @Published var profileSetup = ProfileSetup()
     
-    /// Account requires setup
-    @Published var requiresProfileSetup = false
-    
-    /// Loading state for initial authentication check
-    @Published var isLoading = true
-    
-    /// Error message
-    @Published var errorMessage: String?
-    
-    /// Setup First Name
-    @Published var setupFirstName: String = ""
-    
-    /// Setup Last Name
-    @Published var setupLastName: String = ""
-    
-    /// Setup Profile image
-    @Published var setupProfileImage: UIImage?
-    
-    /// User Service
+    /// User Service.
     private let service = UserService()
     
-    /// Temp User Session
+    /// Temp User Session.
     private var tempUserSession: FirebaseAuth.User?
     
     init() {
-        self.userSession = Auth.auth().currentUser
-        
-        // Only check profile setup if we have a user session
-        if self.userSession != nil {
-            Task {
-                await checkIfUserNeedsProfileSetup()
-            }
-        } else {
-            self.isLoading = false
+        Task {
+            await initializeAuth()
         }
     }
     
-    func checkIfUserNeedsProfileSetup() async {
-        defer { self.isLoading = false } // Always set loading to false when done
-        
-        guard let user = Auth.auth().currentUser else {
-            self.isLoading = false
+    /// Initializes authentication state
+    private func initializeAuth() async {
+        guard let currentUser = Auth.auth().currentUser else {
+            authState = .unauthenticated
             return
         }
         
-        let userDocRef = Firestore.firestore().collection("users").document(user.uid)
-        
+        await checkUserProfileStatus(for: currentUser)
+    }
+    
+    /// Checks if user needs profile setup or loads existing user
+    private func checkUserProfileStatus(for firebaseUser: FirebaseAuth.User) async {
+      let userDocRef = Firestore.firestore().collection("users").document(firebaseUser.uid)
+      
+      do {
+          let snapshot = try await userDocRef.getDocument()
+          
+          if snapshot.exists {
+              await fetchAndSetUser(uid: firebaseUser.uid)
+          } else {
+              authState = .requiresSetup(firebaseUser)
+          }
+      } catch {
+          authState = .error("Failed to check user profile: \(error.localizedDescription)")
+      }
+    }
+    
+    /// Fetches user data and updates auth state
+    private func fetchAndSetUser(uid: String) async {
+      await withCheckedContinuation { continuation in
+          service.fetchUser(withUid: uid) { [weak self] user in
+              guard let self = self else {
+                  continuation.resume()
+                  return
+              }
+              self.authState = .authenticated(user)
+              continuation.resume()
+          }
+      }
+    }
+    
+    /// Logs out the current user.
+    func logout() throws {
         do {
-            let snapshot = try await userDocRef.getDocument()
-            if snapshot.exists {
-                self.fetchUser()
-                self.requiresProfileSetup = false
-            } else {
-                // Firestore document does not exist yet
-                self.requiresProfileSetup = true
-            }
+            try Auth.auth().signOut()
+            authState = .unauthenticated
+            profileSetup = ProfileSetup()
         } catch {
-            self.errorMessage = "Failed to check user profile"
+            authState = .error("Failed to log out: \(error.localizedDescription)")
         }
     }
     
-    // MARK: - Fetch User
+    /// Clears any error messages
+     func clearError() {
+         if case .error = authState {
+             authState = .unauthenticated
+         }
+     }
     
-    func fetchUser() {
-        guard let uid = self.userSession?.uid else {
-            return 
-        }
-        
-        service.fetchUser(withUid: uid) { [weak self] user in
-            guard let self = self else { return }
-            self.currentUser = user
-        }
-    }
-    
-    // MARK: - Sign Out
-    
-    func logout() {
-        print("LOGGING OUT USER")
-        userSession = nil
-        tempUserSession = nil
-        currentUser = nil
-        requiresProfileSetup = false
-        try? Auth.auth().signOut()
-    }
-    
-    // MARK: - Google sign in
-    
-    func signInGoogle() async throws {
-        // google sign in
-        guard let clientID = FirebaseApp.app()?.options.clientID else {
-            fatalError("no firbase clientID found")
-        }
+    /// Signs in through Google.
+    func signInGoogle() async {
+       do {
+           authState = .loading
+           
+           // Get Firebase client ID
+           guard let clientID = FirebaseApp.app()?.options.clientID else {
+               throw AppError.networkError("Firebase configuration error")
+           }
 
-        // Create Google Sign In configuration object.
-        let config = GIDConfiguration(clientID: clientID)
-        GIDSignIn.sharedInstance.configuration = config
-        
-        //get rootView
-        let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene
-        guard let rootViewController = scene?.windows.first?.rootViewController
-        else {
-            fatalError("There is no root view controller!")
-        }
-        
-        //google sign in authentication response
-        let result = try await GIDSignIn.sharedInstance.signIn(
-            withPresenting: rootViewController
-        )
-        let user = result.user
-        guard let idToken = user.idToken?.tokenString else {
-            throw TNError.generalError
-        }
-        
-        //Firebase auth
-        let credential = GoogleAuthProvider.credential(
-            withIDToken: idToken, accessToken: user.accessToken.tokenString
-        )
-        let authResult = try await Auth.auth().signIn(with: credential)
-        
-        let firebaseUser = authResult.user
-        
-        self.tempUserSession = firebaseUser
-
-        let userDocRef = Firestore.firestore().collection("users").document(firebaseUser.uid)
-        let snapshot = try await userDocRef.getDocument()
-        
-        if snapshot.exists {
-            self.userSession = firebaseUser
-            self.fetchUser()
-            self.requiresProfileSetup = false
-        } else {
-            self.userSession = firebaseUser
-            self.requiresProfileSetup = true
-        }
-    }
+           // Configure Google Sign In
+           let config = GIDConfiguration(clientID: clientID)
+           GIDSignIn.sharedInstance.configuration = config
+           
+           // Get root view controller
+           guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                 let rootViewController = scene.windows.first?.rootViewController else {
+               throw AppError.networkError("Unable to find root view controller")
+           }
+           
+           // Perform Google Sign In
+           let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController)
+           let user = result.user
+           
+           guard let idToken = user.idToken?.tokenString else {
+               throw AppError.networkError("Failed to get ID token")
+           }
+           
+           // Sign in with Firebase
+           let credential = GoogleAuthProvider.credential(
+               withIDToken: idToken,
+               accessToken: user.accessToken.tokenString
+           )
+           let authResult = try await Auth.auth().signIn(with: credential)
+           
+           // Check if user profile exists
+           await checkUserProfileStatus(for: authResult.user)
+           
+       } catch {
+           authState = .error("Sign in failed: \(error.localizedDescription)")
+       }
+   }
     
-    func saveUser() async throws {
-        guard let uid = userSession?.uid else {
+    /// Saves the user date.
+    func saveUserProfile() async {
+        guard case .requiresSetup(let firebaseUser) = authState else {
+            authState = .error("Invalid state for profile setup")
             return
         }
-        guard let image = setupProfileImage else {
+        
+        guard profileSetup.isValid else {
+            authState = .error("Please fill in all required fields")
             return
         }
-        let userData = ["firstName": setupFirstName,
-                        "lastName": setupLastName,
-                        "uid": uid]
+        
         do {
-            try Firestore.firestore().collection("users").document(uid).setData(from: userData)
-            let downloadUrl = try await ImageUploader.uploadImage(image: image)
+            authState = .loading
             
-            try await Firestore.firestore().collection("users").document(uid).updateData(["profileImageUrl": downloadUrl])
-            self.requiresProfileSetup = false
+            let userData: [String: Any] = [
+                "firstName": profileSetup.firstName.trimmingCharacters(in: .whitespacesAndNewlines),
+                "lastName": profileSetup.lastName.trimmingCharacters(in: .whitespacesAndNewlines),
+                "uid": firebaseUser.uid
+            ]
+            
+            try await Firestore.firestore()
+                .collection("users")
+                .document(firebaseUser.uid)
+                .setData(userData)
+            
+            if let image = profileSetup.profileImage {
+                let downloadUrl = try await ImageUploader.uploadImage(image: image)
+                try await Firestore.firestore()
+                    .collection("users")
+                    .document(firebaseUser.uid)
+                    .updateData(["profileImageUrl": downloadUrl])
+            }
+            
+            profileSetup = ProfileSetup()
+            await fetchAndSetUser(uid: firebaseUser.uid)
+            
         } catch {
-            print(error.localizedDescription)
-            throw TNError.generalError
+            authState = .error("Failed to save profile: \(error.localizedDescription)")
         }
     }
 }

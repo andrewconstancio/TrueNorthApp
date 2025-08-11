@@ -1,26 +1,48 @@
 import SwiftUI
 
 
+enum GoalCompletionState {
+    case notStarted
+    case inProgress
+    case completed
+}
+
+@MainActor
 class GoalRowViewModel: ObservableObject {
     let goal: Goal
     let selectedDate: Date
-    let service = GoalService()
-    @Published var didComplete: Bool = false
+    let isPastDate: Bool
+    private let service: GoalService
     
-    init(goal: Goal, selectedDate: Date) {
+    @Published var goalCompletedState: GoalCompletionState = .inProgress
+    @Published var isLoading: Bool = false
+    
+    init(goal: Goal, selectedDate: Date, isPastDate: Bool, service: GoalService = GoalService()) {
         self.goal = goal
         self.selectedDate = selectedDate
+        self.isPastDate = isPastDate
+        self.service = service
+        
         Task {
-            try? await checkIfUpdateMade()
+            await loadCompletionState()
         }
     }
     
-    @MainActor
-    func checkIfUpdateMade() async throws {
+    func loadCompletionState() async {
+        isLoading = true
+        
         do {
-            self.didComplete = try await service.checkIfUpdateMadeGoal(for: goal, selectedDate: selectedDate)
+            let completed = try await service.checkIfUpdateMadeGoal(for: goal, selectedDate: selectedDate)
+            
+            if completed {
+                goalCompletedState = .completed
+            } else if isPastDate {
+                goalCompletedState = .notStarted
+            }
         } catch {
-            print(error.localizedDescription)
+            print("Failed to load completion state: \(error.localizedDescription)")
         }
+        
+        isLoading = false
     }
 }

@@ -7,7 +7,7 @@ struct AddProfilePictureView: View {
     @State private var scale: CGFloat = 1.0
     
     private var isValidProfilePicture: Bool {
-        guard let _ = viewModel.setupProfileImage else {
+        guard let _ = viewModel.profileSetup.profileImage else {
             return false
         }
         return true
@@ -26,7 +26,7 @@ struct AddProfilePictureView: View {
                 shouldShowImagePicker.toggle()
             } label: {
                 ProfileImageView(
-                    image: viewModel.setupProfileImage,
+                    image: viewModel.profileSetup.profileImage,
                     scale: $scale,
                     lastScaleValue: $lastScaleValue
                 )
@@ -36,11 +36,7 @@ struct AddProfilePictureView: View {
 
             Button {
                 Task {
-                    do {
-                        try await viewModel.saveUser()
-                    } catch {
-                        print(error.localizedDescription)
-                    }
+                    await viewModel.saveUserProfile()
                 }
             } label: {
                 Text("Submit")
@@ -54,7 +50,7 @@ struct AddProfilePictureView: View {
             .padding(.bottom, 40)
         }
         .fullScreenCover(isPresented: $shouldShowImagePicker) {
-            ImageMoveAndScaleSheet(croppedImage: $viewModel.setupProfileImage)
+            ImageMoveAndScaleSheet(croppedImage: $viewModel.profileSetup.profileImage)
         }
         .padding()
     }

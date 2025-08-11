@@ -1,210 +1,239 @@
 import SwiftUI
 
 struct GoalDetailView: View {
-    /// The users inputed goal of this view.
     let goal: Goal
+    let selectedDate: Date
     
-    /// The keyboard property observer.
+    ///Environment
+    @Environment(\.dismiss) var dismiss
     @StateObject private var keyboard = KeyboardObserver()
+    @StateObject private var viewModel = GoalDetailViewModel()
     
-    /// The goal view model.
-    @ObservedObject var goalViewModel: GoalViewModel
-    
-    /// The text overlay shown to the user.
+    /// State
     @State private var goalTextShown: String = ""
-    
-    /// The goals text.
     @State private var goalText: String = ""
-     
-    /// Should show the delete goal popover.
-    @State private var showDeleteGoalPopover = false
-    
-    /// The goal notes text.
     @State private var goalNotes: String = ""
+    @State private var showDeleteGoalPopover = false
+    @State private var showText = false
+    @State private var showSavingState: Bool = false
+    @State private var animateBorder = false
+    @State private var completed: Bool = false
+    @State private var currentError: AppError?
+    @State private var showingErrorAlert = false
     
-    /// Focus keyboard.
+    /// Focus State
     @FocusState private var isKeyboardFocused: Bool
-    
-    /// Is the goal notes focused.
     @FocusState private var isGoalNotesFocused: Bool
     
-    /// Dismiss environment view.
-    @Environment(\.dismiss) var dismiss
-    
-    /// Is the goal update complete.
-    private var isCompleted: Bool {
+    /// Local vars
+    private var typedInGoal: Bool {
         goal.title.lowercased() == goalText.lowercased()
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            goalStartedDate
-            description
-            header
+        VStack(alignment: .leading, spacing: 16) {
+            goalStartedDateView
+            descriptionView
+            directionsText
+            headerView
             Spacer()
-            goalTextField
-            goalSteakCounter
-            Spacer()
-            addNotesButton
+            if showSavingState {
+                saveButton
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
+        .task {
+            await getGoalDetails()
+        }
+        .onAppear {
+            animateBorder = true
+        }
+        .hideKeyboardOnTap()
+        .padding()
         .scrollIndicators(.hidden)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showDeleteGoalPopover = true
-                } label: {
-                    Image(systemName: "trash")
-                        .resizable()
-                        .foregroundStyle(.primary)
-                        .frame(width: 24, height: 24)
-                }
+                deleteButton
+            }
+        }
+        .onChange(of: typedInGoal) { newValue in
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
+                showSavingState = true
             }
         }
         .onChange(of: goalText) { newValue in
             handleTextChange(newValue)
         }
-        .sheet(isPresented: $showDeleteGoalPopover, content: {
-            deleteGoal
+        .sheet(isPresented: $showDeleteGoalPopover) {
+            deleteGoalSheet
                 .presentationDetents([.fraction(0.4)])
-        })
-        .onAppear {
-            isKeyboardFocused = true
+        }
+        .background(Color.backgroundPrimary.ignoresSafeArea())
+        .errorAlert(isPresented: $showingErrorAlert, error: currentError)
+    }
+    
+    private func getGoalDetails() async {
+        do {
+            completed = try await viewModel.checkUpdated(for: goal, selectedDate: selectedDate)
+        } catch {
+            currentError = .networkError("Failed to fetch data.")
+            showingErrorAlert = true
         }
     }
     
-    /// Start date of goal.
-    private var goalStartedDate: some View {
+    private var goalStartedDateView: some View {
         HStack {
+            Text(goal.dateCreated.dateValue().formattedDateString)
+                .font(FontManager.Bungee.regular.font(size: 14))
+                .foregroundStyle(.sunglow)
             Spacer()
-            Text("Started")
-                .fontWeight(.bold)
-            Text("Jan 1, 2021")
-                .font(.caption)
+            Text("Streak: \(goal.streak)")
+                .font(FontManager.Bungee.regular.font(size: 14))
+                .foregroundStyle(.sunglow)
         }
     }
     
-    /// Header. Shows goal title and goal text update. 
-    private var header: some View {
-        VStack {
-            ZStack(alignment: .topLeading) {
-                Text(goal.title)
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.gray.opacity(0.3))
-                    .multilineTextAlignment(.leading)
-                
-                Text(goalTextShown)
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.primary)
-                    .multilineTextAlignment(.leading)
+    private func completeGoal() {
+        Task {
+            do {
+                guard let goalId = goal.id else { return }
+                try await viewModel.saveProgress(for: goalId)
+            } catch {
+                currentError = .customError(message: "Failed to save progress. Please try again later.")
+                showingErrorAlert = true
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.top, 20)
-        .onTapGesture {
-            isKeyboardFocused.toggle()
+            showSavingState = false
         }
     }
     
-    /// Goal description
-    private var description: some View {
-        Text(goal.description)
-            .fontWeight(.medium)
-            .padding(.top, 50)
+    private var headerView: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 0) {
+                ZStack(alignment: .topLeading) {
+                    Text(goal.title)
+                        .font(FontManager.Bungee.regular.font(size: 26))
+                        .foregroundStyle(typedInGoal || completed ? .textPrimary : .textPrimary.opacity(0.3))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 12)
+                    
+                    TextField("", text: $goalText)
+                        .focused($isKeyboardFocused)
+                        .font(FontManager.Bungee.regular.font(size: 26))
+                        .foregroundStyle(.textPrimary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 12)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .padding(.top, 20)
+            .padding(.horizontal)
+            .padding(.bottom, 12)
+            .background(.spaceCadet)
+            .cornerRadius(10)
+            .opacity(showText ? 1 : 0)
+            .onAppear {
+                withAnimation(.easeIn(duration: 0.5)) {
+                    showText = true
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
     
-    /// Save goal update button.
     private var saveButton: some View {
         Button {
-            if let goalId = goal.id {
-                Task {
-                    try? await goalViewModel.saveProgress(for: goalId)
-                }
-                dismiss()
-            }
+            completeGoal()
         } label: {
-            Text("Save")
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(width: 340, height: 65)
-                .background(isCompleted ? Color.themeColor : Color.black.opacity(0.4))
+            Text("Save!")
+                .font(FontManager.Bungee.regular.font(size: 22))
+                .foregroundStyle(.textPrimary)
+                .frame(height: 65)
+                .frame(maxWidth: .infinity)
+                .background(.utOrange)
                 .clipShape(Capsule())
-                .padding()
-                .animation(.easeOut(duration: 0.25), value: keyboard.keyboardHeight)
-                .opacity(isCompleted ? 1 : 0.5)
         }
     }
     
-    /// Text field for goal update.
-    private var goalTextField: some View {
-        TextField("", text: $goalText)
-            .focused($isKeyboardFocused)
-            .opacity(0)
+    private var descriptionView: some View {
+        Text(goal.description)
+            .font(FontManager.Bungee.regular.font(size: 16))
+            .foregroundStyle(.textPrimary)
     }
     
-    /// Delete goal and goal history view.
-    private var deleteGoal: some View {
-        VStack(alignment: .leading) {
+    private var directionsText: some View {
+        Text("Retype the goal to cement the commitment.")
+            .font(FontManager.Bungee.regular.font(size: 12))
+            .foregroundStyle(.textSecondary)
+    }
+    
+    private var deleteButton: some View {
+        Button {
+            showDeleteGoalPopover = true
+        } label: {
+            Image(systemName: "trash")
+                .resizable()
+                .foregroundStyle(.primary)
+                .frame(width: 18, height: 22)
+        }
+    }
+    
+    private var deleteGoalSheet: some View {
+        VStack(alignment: .leading, spacing: 32) {
             Text("Delete habit and its history?")
                 .font(.title3)
                 .fontWeight(.bold)
             
-            Spacer().frame(height: 32)
-            
             VStack(spacing: 15) {
-                Button {
-                    showDeleteGoalPopover = false
-                    if let goalId = goal.id {
-                        Task {
-                            do {
-                                try await goalViewModel.deleteGoalAndHistory(for: goalId)
-                                dismiss()
-                            } catch {
-                                print(error.localizedDescription)
-                            }
-                        }
-                    }
-                } label: {
-                    Text("Delete habit and history")
-                        .font(.headline)
-                        .foregroundColor(.black)
-                        .frame(width: 340, height: 65)
-                        .background(.yellow)
-                        .clipShape(Capsule())
-                }
-                
-                Button {
-                    showDeleteGoalPopover = false
-                } label: {
-                    Text("Keep it")
-                        .font(.headline)
-                        .foregroundColor(.black)
-                        .frame(width: 340, height: 65)
-                        .background(.gray)
-                        .clipShape(Capsule())
-                }
+                deleteConfirmButton
+                keepGoalButton
             }
+        }
+        .padding()
+    }
+    
+    private var deleteConfirmButton: some View {
+        Button {
+            showDeleteGoalPopover = false
+            deleteGoal()
+        } label: {
+            Text("Delete habit and history")
+                .font(.headline)
+                .foregroundColor(.black)
+                .frame(width: 340, height: 65)
+                .background(.yellow)
+                .clipShape(Capsule())
         }
     }
     
-    /// Goal streak conter.
-    private var goalSteakCounter: some View {
+    private var keepGoalButton: some View {
+        Button {
+            showDeleteGoalPopover = false
+        } label: {
+            Text("Keep it")
+                .font(.headline)
+                .foregroundColor(.black)
+                .frame(width: 340, height: 65)
+                .background(.gray)
+                .clipShape(Capsule())
+        }
+    }
+    
+    private var goalStreakCounter: some View {
         HStack {
             Spacer()
             VStack(spacing: 8) {
                 Text("Streak")
                     .fontWeight(.bold)
                 
-                Text("2")
-                    .font(.system(size: 90))
+                Text("\(goal.streak)")
+                    .font(.system(size: 60))
                     .fontWeight(.bold)
             }
             Spacer()
         }
     }
     
-    /// Add notes button.
     private var addNotesButton: some View {
         ZStack(alignment: .topLeading) {
             if goalNotes.isEmpty && !isGoalNotesFocused {
@@ -218,11 +247,11 @@ struct GoalDetailView: View {
                 .focused($isGoalNotesFocused)
                 .scrollContentBackground(.hidden)
                 .frame(minHeight: 100)
-                .accessibilityLabel("Goal description")
+                .accessibilityLabel("Goal notes")
         }
         .padding()
         .frame(height: 100)
-        .background(Color.gray.opacity(0.2).ignoresSafeArea())
+        .background(Color.gray.opacity(0.2))
         .clipShape(
             .rect(
                 topLeadingRadius: 20,
@@ -232,7 +261,20 @@ struct GoalDetailView: View {
             )
         )
     }
-
+    
+    private func deleteGoal() {
+        guard let goalId = goal.id else { return }
+        
+        Task {
+            do {
+                try await viewModel.deleteGoalAndHistory(for: goalId)
+                dismiss()
+            } catch {
+                print("Error deleting goal: \(error.localizedDescription)")
+            }
+        }
+    }
+    
     private func handleTextChange(_ newValue: String) {
         var newShown = ""
         var newValid = ""
@@ -270,6 +312,6 @@ struct GoalDetailView: View {
 #Preview {
     GoalDetailView(
         goal: Goal.dummy,
-        goalViewModel: GoalViewModel()
+        selectedDate: Date()
     )
 }

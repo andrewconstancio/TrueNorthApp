@@ -7,11 +7,10 @@ struct FormSection: ViewModifier {
     func body(content: Content) -> some View {
         content
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
             .background(
               ZStack {
                   RoundedRectangle(cornerRadius: 12, style: .continuous)
-                      .fill(.ultraThinMaterial) // Adds a blurred, translucent material effect
+                      .fill(.black.opacity(0.1))
               }
             )
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))

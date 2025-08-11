@@ -1,233 +1,202 @@
 import SwiftUI
+import Firebase
 
 struct GoalsEditView: View {
-    /// ViewModel for handling goal data
     @ObservedObject var goalViewModel: GoalViewModel
-
-    /// The goals name text.
-    @State private var goalName: String = ""
+    @State private var formData = GoalFormData()
+    @State private var showingError = false
+    @State private var errorMessage = ""
+    @State private var isSaving = false
     
-    /// The goals description text.
-    @State private var goalDescription: String = ""
-    
-    /// The selected category of the goal.
-    @State private var category: String = "Personal"
-    
-    /// The start date of the goal.
-    @State private var startDate: Date = Date()
-    
-    /// If the goal does not have a end date.
-    @State private var endlessGoal: Bool = false
-    
-    /// The end date of the goal.
-    @State private var endDate: Date = Calendar.current.date(byAdding: .day, value: 30, to: Date())!
-    
-    /// The theme goal of the goal.
-    @State private var selectedColor: Color = .blue
-    
-    /// The selected term of the goal.
-    @State private var selectedTerm: GoalTerm = .medium
-
-    /// Focus state for managing keyboard behavior
     @FocusState private var isDescriptionFocused: Bool
-    
-    /// Dismisses the view when called
-    @Environment(\.dismiss) var dismiss
-
-    /// Available categories
-    let categories = ["Personal", "Health", "Career", "Fitness", "Education", "Finance"]
-
-    /// An enumeration representing goal duration with associated colors.
-    enum GoalTerm: String, CaseIterable {
-        case short = "Short"
-        case medium = "Medium"
-        case long = "Long"
-        
-        var color: Color {
-            switch self {
-            case .short: return .yellow
-            case .medium: return .green
-            case .long: return .purple
-            }
-        }
-    }
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                goalInputSection
-                targetDate
-                type
-                Spacer(minLength: 50)
+            LazyVStack(spacing: 24) {
+                goalBasicInfoSection
+                goalTargetDateSection
+                goalCategorySection
             }
             .padding()
+            .padding(.bottom, 60)
         }
-        .navigationTitle("Add Goal")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
-        .toolbar {
-            toolbarSaveButton // Save button in top-right corner
+        .toolbar { toolbarContent }
+        .alert("Error", isPresented: $showingError) {
+            Button("OK") { }
+        } message: {
+            Text(errorMessage)
+        }
+        .background(.backgroundPrimary)
+    }
+    
+    var goalBasicInfoSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            sectionHeader("Goal Details")
+            
+            VStack(alignment: .leading, spacing: 12) {
+                ZStack(alignment: .topLeading) {
+                    if formData.name.isEmpty {
+                        Text("What do you want to achieve?")
+                            .font(FontManager.Bungee.regular.font(size: 16))
+                            .foregroundStyle(.textPrimary.opacity(0.2))
+                    }
+                    
+                    TextField("", text: $formData.name)
+                        .font(FontManager.Bungee.regular.font(size: 16))
+                        .foregroundStyle(.textPrimary)
+                        .frame(minHeight: 20)
+                        .accessibilityLabel("Goal name")
+                }
+                
+                Divider()
+                
+                descriptionEditor
+            }
+            .padding()
+            .modifier(FormSection(tintColor: formData.selectedColor))
         }
     }
-
-    /// Section for goal title and description.
-    private var goalInputSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            TextField("Goal Name", text: $goalName)
-                .textFieldStyle(.plain)
-                .font(.headline)
-                .accessibilityLabel("Goal name")
-            
-            Divider()
-            
-            descriptionEditor
-        }
-        .padding(2)
-        .modifier(FormSection(tintColor: selectedColor))
-    }
-
-    /// Custom TextEditor with placeholder for description.
-    private var descriptionEditor: some View {
+    
+    var descriptionEditor: some View {
         ZStack(alignment: .topLeading) {
-            // Placeholder
-            if goalDescription.isEmpty && !isDescriptionFocused {
-                Text("Description")
-                    .bold()
-                    .foregroundColor(Color.primary.opacity(0.2))
-                    .padding(.top, 7)
+            if formData.description.isEmpty && !isDescriptionFocused {
+                Text("Add a detailed description of your goal...")
+                    .font(FontManager.Bungee.regular.font(size: 16))
+                    .foregroundStyle(.textPrimary.opacity(0.2))
+                    .padding(.top, 8)
             }
 
-            TextEditor(text: $goalDescription)
+            TextEditor(text: $formData.description)
+                .font(FontManager.Bungee.regular.font(size: 16))
+                .foregroundStyle(.textPrimary)
                 .focused($isDescriptionFocused)
                 .scrollContentBackground(.hidden)
-                .frame(minHeight: 100)
+                .frame(minHeight: 80)
                 .accessibilityLabel("Goal description")
         }
     }
-
-    /// Section to select the goal's target date.
-    private var targetDate: some View {
-        
-        VStack(alignment: .trailing, spacing: 20) {
-            HStack {
-                Text("Target Date")
-                    .fontWeight(.bold)
-                Spacer()
-                DatePicker("", selection: $endDate, displayedComponents: .date)
-            }
-            
-            Button {
-                endlessGoal.toggle()
-            } label: {
-                Text("Endless")
-                    .fontWeight(.bold)
-                    .padding(8)
-                    .background(
-                         RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.indigo.opacity(endlessGoal ? 0.9 : 0.2))
-                     )
-                     .overlay(
-                          RoundedRectangle(cornerRadius: 12)
-                             .stroke(Color.indigo, lineWidth: 1)
-                     )
-            }
-        }
-        .modifier(FormSection(tintColor: selectedColor))
-    }
-
-    /// Section to choose a goal category.
-    private var type: some View {
-        HStack {
-            Text("Type")
-                .fontWeight(.bold)
-            Spacer()
-            Picker("Category", selection: $category) {
-                ForEach(categories, id: \.self) {
-                    Text($0)
-                        .foregroundStyle(.primary)
-                }
-            }
-        }
-        .modifier(FormSection(tintColor: selectedColor))
-    }
-
-    /// Section to select goal term (short, medium, long)
-    private var termSelectionSection: some View {
+    
+    var goalTargetDateSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("What's the term of this goal?")
-                .font(.headline)
-                .fontWeight(.semibold)
+            sectionHeader("Timeline")
             
-            HStack(spacing: 12) {
-                ForEach(GoalTerm.allCases, id: \.self) { term in
-                    termButton(for: term)
-                }
-            }
-        }
-        .modifier(FormSection(tintColor: selectedColor))
-    }
+            VStack(spacing: 16) {
+                if !formData.isEndless {
+                    HStack {
+                        Text("Target Date")
+                            .font(FontManager.Bungee.regular.font(size: 16))
+                            .foregroundStyle(.textPrimary)
+                        Spacer()
+                        
+                        HStack {
+                            Text(formData.endDate.formattedDateString)
+                                .font(FontManager.Bungee.regular.font(size: 14))
+                                .foregroundStyle(.textPrimary)
 
-    /// Section for color selection.
-    private var colorSelction: some View {
-        HStack {
-            Text("Color")
-                .fontWeight(.bold)
-            Spacer()
-            ColorPicker("", selection: $selectedColor)
-        }
-        .modifier(FormSection(tintColor: selectedColor))
-    }
-
-    /// Button used to select a term with animated visual feedback.
-    private func termButton(for term: GoalTerm) -> some View {
-        Button {
-            selectedTerm = term
-        } label: {
-            Text(term.rawValue)
-                .font(.subheadline)
-                .fontWeight(.bold)
-                .foregroundColor(selectedTerm == term ? .white : term.color)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(selectedTerm == term ? term.color : term.color.opacity(0.15))
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(term.color, lineWidth: selectedTerm == term ? 0 : 1)
-                    }
-                )
-                .shadow(color: term.color.opacity(0.3), radius: selectedTerm == term ? 4 : 1, x: 0, y: 2)
-                .scaleEffect(selectedTerm == term ? 1.03 : 1.0)
-                .animation(.easeOut(duration: 0.2), value: selectedTerm == term)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(term.rawValue) term")
-        .accessibilityHint("Select \(term.rawValue) term for this goal")
-    }
-
-    /// Save button in toolbar that triggers save logic and dismisses the view.
-    private var toolbarSaveButton: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
-            Button("Save") {
-                Task {
-                    do {
-                        try await goalViewModel.saveGoal(
-                            title: goalName,
-                            description: goalDescription,
-                            term: selectedTerm.rawValue,
-                            endDate: endDate,
-                            category: category,
-                            selectedColor: selectedColor
-                        )
-                        dismiss() // Close the view on successful save
-                    } catch {
-                        print(error.localizedDescription)
+                            Image(systemName: "pencil")
+                        }
+                        .overlay {
+                            DatePicker(
+                                "",
+                                selection: $formData.endDate,
+                                displayedComponents: .date
+                            )
+                            .labelsHidden()
+                            .colorMultiply(Color.clear)
+                            .tint(.black)
+                        }
                     }
                 }
+                
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("No Deadline")
+                            .font(FontManager.Bungee.regular.font(size: 16))
+                            .foregroundStyle(.textPrimary)
+                        Text("Work on this goal indefinitely")
+                            .font(FontManager.Bungee.regular.font(size: 12))
+                            .foregroundStyle(.textPrimary)
+                    }
+                    
+                    Spacer()
+                    
+                    Toggle("", isOn: $formData.isEndless)
+                        .labelsHidden()
+                }
             }
-            .fontWeight(.semibold)
-            .disabled(goalName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .padding()
+            .modifier(FormSection(tintColor: formData.selectedColor))
+        }
+    }
+    
+    var goalCategorySection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            sectionHeader("Category")
+            
+            HStack {
+                Text("Type")
+                    .font(FontManager.Bungee.regular.font(size: 16))
+                    .foregroundStyle(.textPrimary)
+                
+                Spacer()
+                
+                Menu {
+                    Picker(selection: $formData.category) {
+                        ForEach(GoalCategories.allCases, id: \.self) { category in
+                            Text(category.rawValue)
+                                .tag(category)
+                        }
+                    } label: {}
+                } label: {
+                    Text(formData.category)
+                        .font(FontManager.Bungee.regular.font(size: 14))
+                        .foregroundStyle(.textPrimary)
+                }
+            }
+            .padding()
+            .modifier(FormSection(tintColor: formData.selectedColor))
+        }
+    }
+    
+    func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(FontManager.Bungee.regular.font(size: 24))
+            .foregroundStyle(.textPrimary)
+    }
+    
+    var toolbarContent: some ToolbarContent {
+        Group {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    guard formData.isValid else { return }
+                    let goal = Goal(
+                        title: formData.name.trimmingCharacters(in: .whitespacesAndNewlines),
+                        description: formData.description.trimmingCharacters(in: .whitespacesAndNewlines),
+                        dateCreated: Timestamp(),
+                        complete: false,
+                        category: formData.category,
+                        uid: "",
+                        streak: 0
+                    )
+                    Task {
+                        try? await goalViewModel.saveGoal(goal)
+                        dismiss()
+                    }
+                } label: {
+                    if isSaving {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                    } else {
+                        Text("Save")
+                            .font(FontManager.Bungee.regular.font(size: 14))
+                            .foregroundStyle(formData.isValid ? .sunglow : .sunglow.opacity(0.5))
+                    }
+                }
+                .disabled(!formData.isValid || isSaving)
+            }
         }
     }
 }

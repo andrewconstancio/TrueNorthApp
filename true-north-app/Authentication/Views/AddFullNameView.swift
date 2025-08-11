@@ -5,7 +5,7 @@ struct AddFullNameView: View {
     @StateObject private var keyboard = KeyboardObserver()
     
     private var isValidName: Bool {
-        !viewModel.setupFirstName.isEmpty && !viewModel.setupLastName.isEmpty && viewModel.setupLastName.count >= 2 && viewModel.setupLastName.count >= 2
+        !viewModel.profileSetup.firstName.isEmpty && !viewModel.profileSetup.lastName.isEmpty && viewModel.profileSetup.firstName.count >= 2 && viewModel.profileSetup.lastName.count >= 2
     }
     
     var body: some View {
@@ -26,7 +26,7 @@ struct AddFullNameView: View {
                     imageName: nil,
                     placeholderText: "First Name",
                     keyboardType: .default,
-                    text: $viewModel.setupFirstName
+                    text: $viewModel.profileSetup.firstName
                 )
                 
                 // Last name
@@ -34,7 +34,7 @@ struct AddFullNameView: View {
                     imageName: nil,
                     placeholderText: "Last Name",
                     keyboardType: .default,
-                    text: $viewModel.setupLastName
+                    text: $viewModel.profileSetup.lastName
                 )
                 
             }

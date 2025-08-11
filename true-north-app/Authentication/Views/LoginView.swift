@@ -1,40 +1,40 @@
 import SwiftUI
 
+/// The login view for this app.
 struct LoginView: View {
+    /// The auth view model.
     @EnvironmentObject var viewModel: AuthViewModel
     
     var body: some View {
         VStack {
             Spacer()
-            logo
+//            logo
             Spacer()
             googleSignInButton
         }
         .padding(.bottom, 40)
     }
     
-    private var logo: some View {
-        AdaptiveView {
-            Image("login_light")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 400, height: 440)
-        } dark: {
-            Image("login_dark")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 400, height: 440)
-        }
-    }
+    /// App logo.
+//    private var logo: some View {
+//        AdaptiveView {
+//            Image("login_light")
+//                .resizable()
+//                .scaledToFit()
+//                .frame(width: 400, height: 440)
+//        } dark: {
+//            Image("login_dark")
+//                .resizable()
+//                .scaledToFit()
+//                .frame(width: 400, height: 440)
+//        }
+//    }
     
+    /// Google sign in button.
     private var googleSignInButton: some View {
         Button {
               Task {
-                  do {
-                      try await viewModel.signInGoogle()
-                  } catch {
-                      
-                  }
+                  await viewModel.signInGoogle()
               }
           } label: {
               HStack {
