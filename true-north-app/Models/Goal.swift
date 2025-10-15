@@ -74,19 +74,6 @@ struct Goal: Identifiable, Codable, Hashable {
     }
 }
 
-extension Goal {
-    init(entity: GoalEntity) {
-        self.id = entity.docId ?? ""
-        self.uid = entity.uid ?? ""
-        self.title = entity.title ?? ""
-        self.category = entity.category ?? ""
-        self.streak = Int(entity.streak)
-        self.description = entity.descriptionGoal ?? ""
-        self.dateCreated = Timestamp(date: entity.dateCreated ?? Date())
-        self.complete = entity.completed
-    }
-}
-
 extension GoalEntity {
     var toGoal: Goal {
         Goal(
