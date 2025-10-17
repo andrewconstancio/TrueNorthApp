@@ -63,6 +63,18 @@ struct GoalFirebaseService {
         goal.setUID(uid)
         
         try Firestore.firestore().collection("goals").addDocument(from: goal)
+        
+//        let docs = try await Firestore.firestore()
+//            .collection("completedGoalsForDay")
+//            .whereField("uid", isEqualTo: uid)
+//            .whereField("dateCreated", isEqualTo: Timestamp(date: Date()))
+//            .getDocuments()
+//            .documents
+//    
+//        
+//        for doc in docs {
+//            try await doc.reference.delete()
+//        }
     }
 
     /// Saves progress for a goal.
@@ -81,6 +93,8 @@ struct GoalFirebaseService {
         try await Firestore.firestore().collection("userGoalUpdates").addDocument(data: data)
     }
     
+    
+    /// Updates that the goals were completed for the current day.
     func updateCompletedForDay() async throws {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         
@@ -105,19 +119,13 @@ struct GoalFirebaseService {
             try await Firestore.firestore()
                 .collection("completedGoalsForDay")
                 .addDocument(data: data)
-        } else {
-            let docs = try await Firestore.firestore()
-                .collection("completedGoalsForDay")
-                .whereField("uid", isEqualTo: uid)
-                .getDocuments()
-                .documents
-            
-            for doc in docs {
-                try await doc.reference.delete()
-            }
         }
     }
     
+    
+    /// Checks to see if the goals were completed for the date.
+    /// - Parameter selectedDate: The full selected date.
+    /// - Returns: Flag weather all of the goals were completed.
     func checkCompletedForDay(selectedDate: Date) async throws -> Bool {
         guard let uid = Auth.auth().currentUser?.uid else { return false }
         
@@ -136,13 +144,54 @@ struct GoalFirebaseService {
             .getDocuments()
             .documents
         
-//        print("startOfNextDay: \(startOfNextDay)")
-//        print("startOfToday: \(startOfToday)")
-//        print("docs: \(docs.count)")
-//        print("docs.isEmpty: \(!docs.isEmpty)")
-        
         return !docs.isEmpty
-    }	
+    }
+    
+    
+    /// Fetches weather all of the goals were completed for the month
+    /// - Parameter monthComponents: The month component to check
+    /// - Returns: A hash map that maps to a date and weather is was completed. 
+    func fetchCompletedDaysFor(monthComponents: DateComponents) async throws -> [Date: Bool] {
+        guard let uid = Auth.auth().currentUser?.uid else { return [:] }
+
+        let calendar = Calendar.current
+        guard let startOfMonth = calendar.date(from: monthComponents),
+              let monthInterval = calendar.dateInterval(of: .month, for: startOfMonth) else { return [:] }
+
+        let endOfMonth = monthInterval.end.addingTimeInterval(-1)
+        var result = [Date: Bool]()
+
+        /// Fetch completed goals from Firestore.
+        let docs = try await Firestore.firestore()
+            .collection("completedGoalsForDay")
+            .whereField("uid", isEqualTo: uid)
+            .whereField("dateCreated", isGreaterThanOrEqualTo: Timestamp(date: startOfMonth))
+            .whereField("dateCreated", isLessThan: Timestamp(date: endOfMonth))
+            .getDocuments()
+            .documents
+
+        /// Map Firestore documents to normalized day
+        var completedDaysSet: Set<Date> = []
+        for doc in docs {
+            if let timestamp = doc["dateCreated"] as? Timestamp {
+                let day = calendar.startOfDay(for: timestamp.dateValue())
+                completedDaysSet.insert(day)
+            }
+        }
+
+        /// Loop over each day of the month
+        var currentDate = startOfMonth
+        while currentDate <= endOfMonth {
+            let dayStart = calendar.startOfDay(for: currentDate)
+            let isCompleted = completedDaysSet.contains(dayStart)
+            result[dayStart] = isCompleted
+            
+            // Move to the next day
+            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
+        }
+        
+        return result
+    }
     
     /// Checks to see if a goal update was made the day prior.
     /// - Parameter goalId: The goal id to check.

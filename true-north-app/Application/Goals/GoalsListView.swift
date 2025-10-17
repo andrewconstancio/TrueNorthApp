@@ -12,6 +12,9 @@ struct GoalsListView: View {
     /// Flag to show the settings sheet.
     @State private var showSettingSheet = false
     
+    /// Flag to show the calendar sheet.
+    @State private var showCalendarSheet = false
+    
     /// Goal Category selected.
     @State private var categorySelected: GoalCategories?
     
@@ -64,22 +67,38 @@ struct GoalsListView: View {
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(24)
         }
+        .sheet(isPresented: $showCalendarSheet) {
+            CalendarView()
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(24)
+        }
         .errorAlert(isPresented: $goalVM.showAppError, error: goalVM.appError)
     }
 
     /// The users name and current date.
     private var headerView: some View {
-        HStack {
-            if let user = vm.authState.currentUser {
-                Text("\(user.firstName) \(user.lastName)")
-                    .font(FontManager.Bungee.regular.font(size: 18))
+        VStack(alignment: .trailing, spacing: 8) {
+            HStack {
+                if let user = vm.authState.currentUser {
+                    Text("\(user.firstName) \(user.lastName)")
+                        .font(FontManager.Bungee.regular.font(size: 18))
+                        .foregroundStyle(.textSecondary)
+                }
+                
+                Spacer()
+                Text(goalVM.selectedDate.formatDate())
+                    .font(FontManager.Bungee.regular.font(size: 14))
                     .foregroundStyle(.textSecondary)
             }
             
-            Spacer()
-            Text(goalVM.selectedDate.formatDate())
-                .font(FontManager.Bungee.regular.font(size: 14))
-                .foregroundStyle(.textSecondary)
+            Button {
+                showCalendarSheet = true
+            } label: {
+                Image(systemName: "calendar")
+                    .resizable()
+                    .foregroundStyle(.textPrimary)
+                    .frame(width: 18, height: 18, alignment: .leading)
+            }
         }
         .padding(.horizontal)
     }
@@ -155,11 +174,6 @@ struct GoalsListView: View {
             }
             .scrollIndicators(.hidden)
             .listStyle(.plain)
-//            .refreshable {
-//                Task {
-//                    await goalVM.fetchGoals()
-//                }
-//            }
         }
     }
     
