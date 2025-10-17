@@ -29,4 +29,13 @@ extension Date {
         let today = Date()
         return calendar.compare(self, to: today, toGranularity: .day) == .orderedDescending
     }
+    
+    /// Formats a date to be `yyyy-MM-dd` and returns a string. 
+    func toYMDString() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0) // Optional: force UTC
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: self)
+    }
 }

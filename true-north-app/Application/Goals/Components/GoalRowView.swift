@@ -48,7 +48,6 @@ struct GoalRowView: View {
         .listRowInsets(EdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5))
         .listRowBackground(Color.backgroundPrimary)
         .onAppear {
-            print("STREAK: \(goal.streak)")
             Task {
                 guard let id = goal.id else { return }
                 await vm.checkDailyEntry(
