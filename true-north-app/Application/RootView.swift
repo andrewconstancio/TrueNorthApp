@@ -54,13 +54,11 @@ struct RootView: View {
     /// Main content view for this app
     var mainInterfaceView: some View {
         NavigationStack(path: $authVM.appPath) {
-            NavigationView {
-                LazyView(
-                    GoalsListView()
-                )
-                .environmentObject(authVM)
-                .environmentObject(goalViewModel)
-            }
+            LazyView(
+                GoalsListView()
+            )
+            .environmentObject(authVM)
+            .environmentObject(goalViewModel)
             .navigationDestination(for: AppRoutes.self) { route in
                 switch route {
                 case .goalAddVew:

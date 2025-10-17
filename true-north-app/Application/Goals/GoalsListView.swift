@@ -4,7 +4,7 @@ import SwiftUI
 ///
 struct GoalsListView: View {
     /// Auth view model.
-    @EnvironmentObject var vm: AuthViewModel
+    @EnvironmentObject var authVM: AuthViewModel
     
     /// Goal view model.
     @EnvironmentObject var goalVM: GoalViewModel
@@ -29,19 +29,22 @@ struct GoalsListView: View {
     
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            VStack {
-                headerView
-                GoalScrollDatePickerView()
-                
-                if goalVM.goals.isEmpty {
-                    noGoalText
-                } else {
-                    categorySelector
-                    goalsListView
+            ScrollView {
+                VStack {
+                    headerView
+                    GoalScrollDatePickerView()
+                    
+                    if goalVM.goals.isEmpty {
+                        noGoalText
+                    } else {
+                        categorySelector
+                        goalsListView
+                    }
+                    Spacer()
                 }
-                Spacer()
+                .padding(.top)
             }
-            .padding(.top)
+            .scrollIndicators(.hidden)
             
             floatingActionButton
         }
@@ -79,7 +82,7 @@ struct GoalsListView: View {
     private var headerView: some View {
         VStack(alignment: .trailing, spacing: 8) {
             HStack {
-                if let user = vm.authState.currentUser {
+                if let user = authVM.authState.currentUser {
                     Text("\(user.firstName) \(user.lastName)")
                         .font(FontManager.Bungee.regular.font(size: 18))
                         .foregroundStyle(.textSecondary)
@@ -164,16 +167,23 @@ struct GoalsListView: View {
         if filteredGoals.isEmpty {
             noGoalText
         } else {
-            List {
+            VStack {
                 ForEach(filteredGoals) { goal in
                     GoalRowView(
                         goal: goal,
                         selectedDate: $goalVM.selectedDate
                     )
+                    
+                    /// Navigate to the goal detail view.
+                    .onTapGesture {
+                        /// If its not the current day do not allow click into.
+                        if !goalVM.selectedDate.isDateInPast() {
+                            authVM.appPath.append(goal)
+                        }
+                    }
                 }
             }
-            .scrollIndicators(.hidden)
-            .listStyle(.plain)
+            .padding(.horizontal, 4)
         }
     }
     
@@ -186,7 +196,7 @@ struct GoalsListView: View {
             
             showSettingSheet = true
         } label: {
-            if let user = vm.authState.currentUser,
+            if let user = authVM.authState.currentUser,
                let urlString = user.profileImageUrl,
                let url = URL(string: urlString) {
                 AsyncCachedImage(url: url) { image in
