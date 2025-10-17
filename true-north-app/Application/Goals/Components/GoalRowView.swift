@@ -24,12 +24,6 @@ struct GoalRowView: View {
             }
             
             ZStack {
-                /// If its not the current day do not allow click into.
-                if !selectedDate.isDateInPast() {
-                    NavigationLink(value: goal) { EmptyView() }
-                        .opacity(0)
-                }
-                
                 goalContent(
                     title: goal.title,
                     description: goal.description,
@@ -40,13 +34,8 @@ struct GoalRowView: View {
                     state: vm.goalCompletedState
                 )
             }
-            .listRowSeparator(.hidden)
-            .listRowInsets(EdgeInsets())
         }
         .id(selectedDate)
-        .listRowSeparator(.hidden)
-        .listRowInsets(EdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5))
-        .listRowBackground(Color.backgroundPrimary)
         .onAppear {
             Task {
                 guard let id = goal.id else { return }

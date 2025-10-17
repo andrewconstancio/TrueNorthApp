@@ -30,7 +30,7 @@ extension Date {
         return calendar.compare(self, to: today, toGranularity: .day) == .orderedDescending
     }
     
-    /// Formats a date to be `yyyy-MM-dd` and returns a string. 
+    /// Formats a date to be `yyyy-MM-dd` and returns a string.
     func toYMDString() -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
