@@ -190,7 +190,7 @@ struct GoalsListView: View {
                     .onTapGesture {
                         // If its not the current day do not allow click into.
                         if !goalVM.selectedDate.isDateInPast() {
-                            authVM.appPath.append(goal)
+                            authVM.appPath.append(AppRoutes.goalDetail(goal))
                         }
                     }
                 }

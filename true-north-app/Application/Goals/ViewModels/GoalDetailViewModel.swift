@@ -3,11 +3,21 @@ import SwiftUI
 class GoalDetailViewModel: ObservableObject {
     
     /// The daily entry goal title input.
-    @Published var goalTitleInputText = ""
-    @Published var savingState = false
+    @Published var goalReEntryText = ""
+    
+    @Published var showSaveButton = false
+    
     @Published var dailyEntryCompleted = false
+    
     @Published var appError: AppError?
+    
     @Published var showAppError = false
+    
+    @Published var goal: Goal
+    
+    init(goal: Goal) {
+        self.goal = goal
+    }
     
     /// Goals firebase service.
     private let service = GoalFirebaseService()
@@ -24,18 +34,6 @@ class GoalDetailViewModel: ObservableObject {
             
             
             try await service.updateCompletedForDay()
-        } catch {
-            print(error.localizedDescription)
-        }
-    }
-    
-    /// Delete the goal and the progress made on the goal.
-    ///
-    /// - Parameter goalId: The goal id which data the delete.
-    ///
-    func deleteGoalAndHistory(for goal: Goal) async {
-        do {
-            try await service.deleteGoalAndHistory(for: goal)
         } catch {
             print(error.localizedDescription)
         }
@@ -62,31 +60,55 @@ class GoalDetailViewModel: ObservableObject {
         }
     }
     
-    func handleGoalTextChange(_ title: String) {
-        let titleGoal = title.lowercased()
-        let input = goalTitleInputText.lowercased()
+    
+    /// Fetches the goal data from firestore.
+    /// - Parameter goalId: The goal id to fetch.
+    @MainActor
+    func refreshGoal(_ goalId: String) async -> Bool {
+        do {
+            let goal = try await service.fetchGoal(by: goalId)
+            self.goal = goal
+            
+            goalReEntryText = ""
+            
+            return true
+        } catch {
+            print(error.localizedDescription)
+            return false
+        }
+    }
+    
+    /// Handles checking if each character entered in the goal re-entry text is equal to the
+    /// goals target text.
+    func handleGoalTextChange() {
+        let targetText = goal.title.lowercased()
+        let reEntryText = goalReEntryText.lowercased()
         
         var validInput = ""
         var goalIndex = 0
         
-        for char in input {
-            guard goalIndex < titleGoal.count else { break }
+        // Check to see if the entered text is equal to the goals title.
+        for char in reEntryText {
+            guard goalIndex < targetText.count else { break }
             
-            let goalChar = titleGoal[titleGoal.index(titleGoal.startIndex, offsetBy: goalIndex)]
+            let titleIndexChar = targetText.index(targetText.startIndex, offsetBy: goalIndex)
+            let goalChar = targetText[titleIndexChar]
             
             if char == goalChar || char == " " {
-                validInput.append(title[title.index(title.startIndex, offsetBy: goalIndex)])
+                validInput.append(goalChar)
                 goalIndex += 1
             } else {
                 break
             }
         }
         
-        goalTitleInputText = validInput
+        // Only assign the re-entry text to valid input.
+        goalReEntryText = validInput
         
-        if titleGoal == goalTitleInputText.lowercased() {
+        // If the re-entry text is equal to teh target text show save button.
+        if targetText == goalReEntryText.lowercased() {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                self.savingState = true
+                self.showSaveButton = true
             }
         }
     }

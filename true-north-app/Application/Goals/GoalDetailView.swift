@@ -1,18 +1,22 @@
 import SwiftUI
 import Lottie
 
+/// Display the details of a goal and has the functionality for the user to make a daily progress re-entry on the goal.
 struct GoalDetailView: View {
     /// The users goal.
-    let goal: Goal
+    var goal: Goal
     
     /// The dismiss environment object.
     @Environment(\.dismiss) private var dismiss
     
-    /// The goal details view model.
-    @StateObject private var vm = GoalDetailViewModel()
+    /// The auth view model. 
+    @EnvironmentObject var authVM: AuthViewModel
     
-    /// Flag to show the delete goal popover.
-    @State private var showDeleteGoalPopover = false
+    /// The goal details view model.
+    @StateObject private var goalDetailVM: GoalDetailViewModel
+    
+    /// Flag to show the edit view.
+    @State private var showEditGoalSheet = false
     
     /// Flag to play the success animation when completing a daily entry.
     @State private var playSuccessAnimation = false
@@ -22,7 +26,16 @@ struct GoalDetailView: View {
     
     /// Flag if the entered text matches the goals total.
     private var isGoalCompleted: Bool {
-        goal.title.lowercased() == vm.goalTitleInputText.lowercased() || vm.dailyEntryCompleted
+        goal.title.lowercased() == goalDetailVM.goalReEntryText.lowercased() || goalDetailVM.dailyEntryCompleted
+    }
+    
+    /// The intializer for this view.
+    /// - Parameter goal: The user goal to be displayed.
+    init(goal: Goal) {
+        self.goal = goal
+        self._goalDetailVM = StateObject(
+            wrappedValue: GoalDetailViewModel(goal: goal)
+        )
     }
     
     var body: some View {
@@ -30,32 +43,52 @@ struct GoalDetailView: View {
             confettiView
             mainContent
         }
-        .task {
-            await vm.checkUpdated(
-                for: goal,
-                selectedDate: Date()
-            )
-        }
         .padding()
         .scrollIndicators(.hidden)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                deleteButton
+                editButton
             }
         }
-        .onChange(of: vm.goalTitleInputText) {_, _ in
-            vm.handleGoalTextChange(goal.title)
+        .onChange(of: goalDetailVM.goalReEntryText) {_, _ in
+            goalDetailVM.handleGoalTextChange()
         }
-        .sheet(isPresented: $showDeleteGoalPopover) {
-            deleteGoalSheet
+        .sheet(isPresented: $showEditGoalSheet) {
+            NavigationStack {
+                GoalAddEditView(goal: goal)
+                    .onDisappear {
+                        guard let id = goal.id else {
+                            return
+                        }
+                        Task {
+                            let exist = await goalDetailVM.refreshGoal(id)
+                            
+                            // If it doesn't exist anymore dismiss the view.
+                            if !exist {
+                                dismiss()
+                            }
+                        }
+                    }
+            }
         }
         .background(Color.backgroundPrimary.ignoresSafeArea())
-        .errorAlert(isPresented: $vm.showAppError, error: vm.appError)
+        .errorAlert(
+            isPresented: $goalDetailVM.showAppError,
+            error: goalDetailVM.appError
+        )
         .hideKeyboardOnTap()
         
         // Show the retyping goal keyboard on appear.
         .onAppear {
             isKeyboardFocused = true
+        }
+        
+        // Check to see if the goals daily saved was made.
+        .task {
+            await goalDetailVM.checkUpdated(
+                for: goal,
+                selectedDate: Date()
+            )
         }
     }
     
@@ -68,7 +101,7 @@ struct GoalDetailView: View {
             goalInputView
             Spacer()
             
-            if vm.savingState {
+            if goalDetailVM.showSaveButton {
                 saveButton
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
@@ -92,7 +125,7 @@ struct GoalDetailView: View {
     /// Goal Metadata.
     private var goalMetadataView: some View {
         HStack {
-            if let endDate = goal.endDate {
+            if let endDate = goalDetailVM.goal.endDate {
                 HStack(spacing: 4) {
                     Text("End Date:")
                         .font(FontManager.Bungee.regular.font(size: 14))
@@ -106,7 +139,7 @@ struct GoalDetailView: View {
             
             Spacer()
             
-            Text("Streak: \(goal.streak)")
+            Text("Streak: \(goalDetailVM.goal.streak)")
                 .font(FontManager.Bungee.regular.font(size: 16))
                 .foregroundStyle(.sunglow)
         }
@@ -114,7 +147,7 @@ struct GoalDetailView: View {
     
     /// Description.
     private var descriptionView: some View {
-        Text(goal.description)
+        Text(goalDetailVM.goal.description)
             .font(FontManager.Bungee.regular.font(size: 18))
             .foregroundStyle(.textPrimary)
     }
@@ -129,14 +162,15 @@ struct GoalDetailView: View {
     /// Goal Input View.
     private var goalInputView: some View {
         ZStack(alignment: .topLeading) {
-            Text(goal.title)
+            Text(goalDetailVM.goal.title)
                 .font(FontManager.Bungee.regular.font(size: 26))
                 .foregroundStyle(isGoalCompleted ? .textPrimary : .textPrimary.opacity(0.3))
             
             if !isGoalCompleted {
-                MultilineTextField(text: $vm.goalTitleInputText)
+                MultilineTextField(text: $goalDetailVM.goalReEntryText)
                     .focused($isKeyboardFocused)
                     .frame(width: 350)
+                    .padding(.leading, -12)
             }
         }
         .frame(width: 350, alignment: .leading)
@@ -152,10 +186,10 @@ struct GoalDetailView: View {
                 let impact = UIImpactFeedbackGenerator(style: .medium)
                 impact.impactOccurred()
                 
-                guard let goalId = goal.id else { return }
-                await vm.saveProgress(for: goalId)
+                guard let goalId = goalDetailVM.goal.id else { return }
+                await goalDetailVM.saveProgress(for: goalId)
                 playSuccessAnimation = true
-                vm.savingState = false
+                goalDetailVM.showSaveButton = false
                 dismiss()
             }
         } label: {
@@ -169,64 +203,23 @@ struct GoalDetailView: View {
         }
     }
     
-    /// Trash can delete button for the goal.
-    private var deleteButton: some View {
+    /// Pencil edit button for the goal.
+    private var editButton: some View {
         Button {
-            showDeleteGoalPopover = true
+            showEditGoalSheet = true
         } label: {
-            Image(systemName: "trash")
+            Image(systemName: "pencil")
                 .resizable()
                 .foregroundStyle(.primary)
-                .frame(width: 18, height: 22)
+                .frame(width: 16, height: 16)
         }
-    }
-    
-    /// Delete Goal Sheet.
-    private var deleteGoalSheet: some View {
-        VStack(alignment: .leading, spacing: 32) {
-            Text("Delete habit and its history?")
-                .font(FontManager.Bungee.regular.font(size: 16))
-                .foregroundStyle(.textPrimary)
-            
-            VStack(spacing: 15) {
-                // Delete the goal button.
-                Button {
-                    showDeleteGoalPopover = false
-                    Task {
-                        await vm.deleteGoalAndHistory(for: goal)
-                        dismiss()
-                    }
-                } label: {
-                    Text("Delete habit and history")
-                        .font(FontManager.Bungee.regular.font(size: 14))
-                        .foregroundStyle(.textBlack)
-                        .frame(width: 340, height: 65)
-                        .background(.sunglow)
-                        .clipShape(Capsule())
-                }
-                
-                
-                // Keep the goal button.
-                Button {
-                    showDeleteGoalPopover = false
-                } label: {
-                    Text("Keep it")
-                        .font(FontManager.Bungee.regular.font(size: 14))
-                        .foregroundColor(.textBlack)
-                        .frame(width: 340, height: 65)
-                        .background(.gray)
-                        .clipShape(Capsule())
-                }
-            }
-        }
-        .padding()
-        .presentationDetents([.fraction(0.4)])
-        .background(Color.backgroundLighter)
     }
 }
 
 #Preview {
-    GoalDetailView(
-        goal: Goal.dummy
-    )
+    NavigationStack {
+        GoalDetailView(
+            goal: Goal.dummy
+        )
+    }
 }

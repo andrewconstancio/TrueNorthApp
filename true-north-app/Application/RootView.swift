@@ -62,11 +62,10 @@ struct RootView: View {
             .navigationDestination(for: AppRoutes.self) { route in
                 switch route {
                 case .goalAddVew:
-                    GoalAddView()
+                    GoalAddEditView(goal: nil)
+                case .goalDetail(let goal):
+                    GoalDetailView(goal: goal)
                 }
-            } 
-            .navigationDestination(for: Goal.self) { goal in
-                GoalDetailView(goal: goal)
             }
         }
         .tint(.textPrimary)
