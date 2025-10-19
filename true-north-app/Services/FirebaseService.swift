@@ -1,14 +1,61 @@
 import FirebaseFirestore
 import FirebaseAuth
-import SwiftUI
-import CoreData
 
-struct GoalFirebaseService {
+protocol FirebaseServiceProtocol {
+    func fetchUser(withUid uid: String, completion: @escaping(User) -> Void)
+    func fetchUsers(completion: @escaping([User]) -> Void)
+    func fetchGoals(selectedDate: Date) async throws -> [Goal]
+    func fetchGoal(by goalId: String) async throws -> Goal
+    func saveGoal(_ goal: Goal) async throws
+    func updateGoal(_ goal: Goal) async throws
+    func saveProgress(for goalId: String) async throws
+    func updateCompletedForDay() async throws
+    func checkCompletedForDay(selectedDate: Date) async throws -> Bool
+    func fetchCompletedDaysFor(monthComponents: DateComponents) async throws -> [Date: Bool]
+    func entryAddedYesterday(for goalId: String) async throws -> Bool
+    func setGoalStreak(for goalId: String, increment: Bool) async throws
+    func checkDailyEntry(for goalId: String, selectedDate: Date) async throws -> Bool
+    func deleteGoalAndHistory(for goal: Goal) async throws
+}
+
+class FirebaseService: ObservableObject, FirebaseServiceProtocol {
     let persistenceController: PersistenceController
 
     init(persistenceController: PersistenceController = .shared) {
         self.persistenceController = persistenceController
     }
+    
+    // MARK: User
+    
+    func fetchUser(withUid uid: String, completion: @escaping(User) -> Void) {
+        Firestore.firestore().collection("users")
+            .document(uid)
+            .getDocument { snapshot, _ in
+                guard let snapshot = snapshot else { return }
+                var user: User
+                
+                do {
+                    user = try snapshot.data(as: User.self)
+                } catch {
+                    print ("Error fetchUser: \(error)")
+                    return
+                }
+                
+                completion(user)
+            }
+    }
+    
+    func fetchUsers(completion: @escaping([User]) -> Void) {
+        Firestore.firestore().collection("users")
+            .getDocuments { snapshot, _ in
+                guard let documents = snapshot?.documents else { return }
+                let users = documents.compactMap({ try? $0.data(as: User.self)})
+                
+                completion(users)
+            }
+    }
+    
+    // MARK: Goals
     
     /// Fetched the goals for a specfic date.
     /// - Parameter selectedDate: The date to select goals from.
@@ -66,7 +113,7 @@ struct GoalFirebaseService {
     
     
     /// Update a users goal
-    /// - Parameter goal: The goals updates object. 
+    /// - Parameter goal: The goals updates object.
     func updateGoal(_ goal: Goal) async throws {
         guard let id = goal.id else { return }
         try Firestore.firestore().collection("goals").document(id).setData(from: goal)
@@ -144,7 +191,7 @@ struct GoalFirebaseService {
     
     /// Fetches weather all of the goals were completed for the month
     /// - Parameter monthComponents: The month component to check
-    /// - Returns: A hash map that maps to a date and weather is was completed. 
+    /// - Returns: A hash map that maps to a date and weather is was completed.
     func fetchCompletedDaysFor(monthComponents: DateComponents) async throws -> [Date: Bool] {
         guard let uid = Auth.auth().currentUser?.uid else { return [:] }
 
@@ -272,3 +319,4 @@ struct GoalFirebaseService {
         }
     }
 }
+

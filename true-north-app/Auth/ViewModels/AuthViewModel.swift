@@ -20,13 +20,14 @@ class AuthViewModel: ObservableObject {
     /// Navigation app state path for this view
     @Published var appPath = NavigationPath()
     
-    /// User Service.
-    private let service = UserFirebaseService()
+    /// Firebase Service.
+    let firebaseService: FirebaseServiceProtocol
     
     /// Temp User Session.
     private var tempUserSession: FirebaseAuth.User?
     
-    init() {
+    init(firebaseService: FirebaseServiceProtocol) {
+        self.firebaseService = firebaseService
         Task {
             await initializeAuth()
         }
@@ -62,7 +63,7 @@ class AuthViewModel: ObservableObject {
     /// Fetches user data and updates auth state
     private func fetchAndSetUser(uid: String) async {
       await withCheckedContinuation { continuation in
-          service.fetchUser(withUid: uid) { [weak self] user in
+          firebaseService.fetchUser(withUid: uid) { [weak self] user in
               guard let self = self else {
                   continuation.resume()
                   return

@@ -1,11 +1,25 @@
 import SwiftUI
 
+class SettingsViewModel: ObservableObject {
+    @Published var firstName = ""
+    @Published var lastName = ""
+     
+    func setup(user: User) {
+        self.firstName = user.firstName
+        self.lastName = user.lastName
+    }
+}
+
 struct SettingsView: View {
     /// Auth view model.
     @EnvironmentObject var authVM: AuthViewModel
     
+    @StateObject private var settingsVM = SettingsViewModel()
+    
     /// Show the sign out alert.
     @State private var showingSignOutAlert = false
+    
+    @State private var showEditNameSheet = false
     
     var body: some View {
         VStack {
@@ -14,15 +28,15 @@ struct SettingsView: View {
                 VStack(spacing: 22) {
                     SettingsRow(
                         title: "Change name",
-                        icon: "hand.wave.fill",
+                        icon: "tag.fill",
                         action: {
-                            showingSignOutAlert = true
+                            showEditNameSheet = true
                         }
                     )
                     
                     SettingsRow(
                         title: "Change profile picture",
-                        icon: "hand.wave.fill",
+                        icon: "person.fill",
                         action: {
                             showingSignOutAlert = true
                         }
@@ -41,10 +55,6 @@ struct SettingsView: View {
                     RoundedRectangle(cornerRadius: 24)
                         .fill(Color.backgroundSecondary)
                 )
-//                .background(
-//                    RoundedRectangle(cornerRadius: 16)
-//                        .fill(Color.backgroundLighter.opacity(0.7))
-//                )
             }
         }
         .padding(.top, 20)
@@ -54,16 +64,22 @@ struct SettingsView: View {
         .signOutAlert(isPresented: $showingSignOutAlert) {
             authVM.logout()
         }
+        .sheet(isPresented: $showEditNameSheet) {
+            EditFullNameView(settingsVM: settingsVM)
+        }
+        .onAppear {
+            guard let user = authVM.authState.currentUser else { return }
+            settingsVM.setup(user: user)
+        }
     }
     
     /// Title.
     private var titleView: some View {
-        HStack(alignment: .center) {
-            Text("Settings")
-                .foregroundStyle(.textSecondary)
-                .font(FontManager.Bungee.regular.font(size: 16))
-            Spacer()
-        }
+        Text("Settings")
+            .foregroundStyle(.textSecondary)
+            .font(FontManager.Bungee.regular.font(size: 16))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, 16)
     }
 }
 
@@ -97,9 +113,54 @@ struct SettingsRow: View {
     }
 }
 
+struct EditFullNameView: View {
+    
+    @ObservedObject var settingsVM: SettingsViewModel
+    
+    @FocusState private var isKeyboardFocused: Bool
+    
+    var body: some View {
+        VStack {
+            Text("Edit your name")
+                .font(FontManager.Bungee.regular.font(size: 22))
+                .foregroundStyle(.textPrimary)
+            
+            // First name
+            CustomInputField(
+                imageName: nil,
+                placeholderText: "First Name",
+                keyboardType: .default,
+                text: $settingsVM.firstName
+            )
+            .focused($isKeyboardFocused)
+            
+            // Last name
+            CustomInputField(
+                imageName: nil,
+                placeholderText: "Last Name",
+                keyboardType: .default,
+                text: $settingsVM.lastName
+            )
+            
+            Text("Save")
+                .font(FontManager.Bungee.regular.font(size: 18))
+                .foregroundStyle(.textPrimary)
+                .frame(width: 340, height: 65)
+                .background(Color.sunglow.opacity(0.8))
+                .clipShape(Capsule())
+                .padding()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .background(Color.backgroundPrimary)
+        .onAppear {
+            isKeyboardFocused = true
+        }
+    }
+}
+
 #Preview {
-    NavigationView {
+    NavigationStack {
         SettingsView()
-            .environmentObject(AuthViewModel())
+            .environmentObject(AuthViewModel(firebaseService: FirebaseService()))
     }
 }

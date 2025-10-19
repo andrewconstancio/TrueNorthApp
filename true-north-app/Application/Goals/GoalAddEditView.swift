@@ -3,8 +3,12 @@ import Firebase
 
 /// Displays the form to add or edit a goal by the user. 
 struct GoalAddEditView: View {
+    
+    /// The goal passed in to add / edit.
+    let goal: Goal?
+    
     /// The goal view model.
-    @StateObject var goalAddEditVM: GoalAddEditViewModel
+    @ObservedObject var goalAddEditVM: GoalAddEditViewModel
     
     /// The dismiss environment object.
     @Environment(\.dismiss) private var dismiss
@@ -14,18 +18,6 @@ struct GoalAddEditView: View {
     
     /// Flag to show the delete goal popover.
     @State private var showDeleteGoalPopover = false
-    
-    /// The goal passed in to add / edit.
-    let goal: Goal?
-    
-    /// The initalize for this view.
-    /// - Parameter goal: The goal passed in to add / edit.
-    init(goal: Goal?) {
-        self.goal = goal
-        self._goalAddEditVM = StateObject(
-            wrappedValue: GoalAddEditViewModel(editGoal: goal)
-        )
-    }
 
     var body: some View {
         content
@@ -293,7 +285,10 @@ struct GoalAddEditView: View {
 
 #Preview {
     NavigationStack {
-        GoalAddEditView(goal: nil)
-            .environmentObject(GoalViewModel())
+        GoalAddEditView(
+            goal: nil,
+            goalAddEditVM: GoalAddEditViewModel(editGoal: nil, firebaseService: FirebaseService()))
+            .environmentObject(GoalViewModel(firebaseService: FirebaseService())
+        )
     }
 }

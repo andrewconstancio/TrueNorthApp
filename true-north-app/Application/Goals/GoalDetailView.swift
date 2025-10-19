@@ -13,7 +13,7 @@ struct GoalDetailView: View {
     @EnvironmentObject var authVM: AuthViewModel
     
     /// The goal details view model.
-    @StateObject private var goalDetailVM: GoalDetailViewModel
+    @ObservedObject var goalDetailVM: GoalDetailViewModel
     
     /// Flag to show the edit view.
     @State private var showEditGoalSheet = false
@@ -31,12 +31,9 @@ struct GoalDetailView: View {
     
     /// The intializer for this view.
     /// - Parameter goal: The user goal to be displayed.
-    init(goal: Goal) {
-        self.goal = goal
-        self._goalDetailVM = StateObject(
-            wrappedValue: GoalDetailViewModel(goal: goal)
-        )
-    }
+//    init(goal: Goal) {
+//        self.goal = goal
+//    }
     
     var body: some View {
         ZStack {
@@ -55,7 +52,13 @@ struct GoalDetailView: View {
         }
         .sheet(isPresented: $showEditGoalSheet) {
             NavigationStack {
-                GoalAddEditView(goal: goal)
+                GoalAddEditView(
+                    goal: goal,
+                    goalAddEditVM: GoalAddEditViewModel(
+                        editGoal: goal,
+                        firebaseService: goalDetailVM.firebaseService
+                    )
+                )
                     .onDisappear {
                         guard let id = goal.id else {
                             return
@@ -219,7 +222,8 @@ struct GoalDetailView: View {
 #Preview {
     NavigationStack {
         GoalDetailView(
-            goal: Goal.dummy
+            goal: Goal.dummy,
+            goalDetailVM: GoalDetailViewModel(goal: Goal.dummy, firebaseService: FirebaseService())
         )
     }
 }

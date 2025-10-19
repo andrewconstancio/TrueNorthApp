@@ -18,6 +18,7 @@ struct GoalsListView: View {
     /// Goal Category selected.
     @State private var categorySelected: GoalCategories?
     
+    /// Show the goal filter reset button.
     @State private var showResetButton = false
     
     /// Goals filtered by the category.
@@ -73,9 +74,11 @@ struct GoalsListView: View {
                 .presentationCornerRadius(24)
         }
         .sheet(isPresented: $showCalendarSheet) {
-            CalendarView()
-                .presentationDragIndicator(.visible)
-                .presentationCornerRadius(24)
+            CalendarView(
+                calendarVM: CalendarViewModel(firebaseService: goalVM.firebaseService)
+            )
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(24)
         }
         .errorAlert(isPresented: $goalVM.showAppError, error: goalVM.appError)
     }
@@ -181,7 +184,10 @@ struct GoalsListView: View {
                 ForEach(filteredGoals) { goal in
                     GoalRowView(
                         goal: goal,
-                        selectedDate: $goalVM.selectedDate
+                        selectedDate: $goalVM.selectedDate,
+                        goalRowVM: GoalRowViewModel(
+                            firebaseService: goalVM.firebaseService
+                        )
                     )
                     // Set the ID of the row for re-rendering.
                     .id("\(String(describing: goal.id))-\(goalVM.selectedDate.timeIntervalSince1970)")
@@ -263,7 +269,7 @@ struct GoalsListView: View {
 #Preview {
     NavigationStack {
         GoalsListView()
-            .environmentObject(AuthViewModel())
-            .environmentObject(GoalViewModel())
+            .environmentObject(AuthViewModel(firebaseService: FirebaseService()))
+            .environmentObject(GoalViewModel(firebaseService: FirebaseService()))
     }
 }

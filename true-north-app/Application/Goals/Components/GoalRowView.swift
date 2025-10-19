@@ -8,14 +8,14 @@ struct GoalRowView: View {
     @Binding var selectedDate: Date
     
     /// Goal row view model for this view.
-    @StateObject var vm = GoalRowViewModel()
+    @ObservedObject var goalRowVM: GoalRowViewModel
     
     /// Flag to animate the row border.
     @State private var animateBorder = false
     
     var body: some View {
         ZStack {
-            if vm.goalCompletedState == .inProgress && !selectedDate.isDateInPast() {
+            if goalRowVM.goalCompletedState == .inProgress && !selectedDate.isDateInPast() {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color.lime.opacity(0.7), lineWidth: 3)
                     .scaleEffect(animateBorder ? 1 : 0.97)
@@ -31,14 +31,14 @@ struct GoalRowView: View {
                     endDate: goal.endDate,
                     icon: GoalCategories(rawValue: goal.category.lowercased())?.icon ?? "question-mark",
                     color: GoalCategories(rawValue: goal.category.lowercased())?.color ?? Color.disabled,
-                    state: vm.goalCompletedState
+                    state: goalRowVM.goalCompletedState
                 )
             }
         }
         .onAppear {
             Task {
                 guard let id = goal.id else { return }
-                await vm.checkDailyEntry(
+                await goalRowVM.checkDailyEntry(
                     for: id,
                     selectedDate: selectedDate
                 )

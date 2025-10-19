@@ -12,12 +12,12 @@ class GoalRowViewModel: ObservableObject {
     @Published var goalCompletedState: GoalCompletionState = .inProgress
 
     /// The goal Firebase Firestore service.
-    private let goalService: GoalFirebaseService
+    private let firebaseService: FirebaseServiceProtocol
     
     /// Initialize this view model.
     /// - Parameter goalService: The goal Firebase Firestore service.
-    init(goalService: GoalFirebaseService = .init()) {
-        self.goalService = goalService
+    init(firebaseService: FirebaseServiceProtocol) {
+        self.firebaseService = firebaseService
     }
     
     /// Checks if daily entry made for the goal.
@@ -29,7 +29,7 @@ class GoalRowViewModel: ObservableObject {
         do {
             goalCompletedState = .inProgress
             
-            let isCompleted = try await goalService.checkDailyEntry(
+            let isCompleted = try await firebaseService.checkDailyEntry(
                 for: goalId,
                 selectedDate: selectedDate
             )

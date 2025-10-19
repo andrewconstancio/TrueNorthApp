@@ -15,13 +15,17 @@ class GoalViewModel: ObservableObject {
     /// An array of the users goals. 
     @Published var goals: [Goal] = []
     
-    /// Goals service.
-    private let service = GoalFirebaseService()
+    /// Firebase service.
+    let firebaseService: FirebaseServiceProtocol
+    
+    init(firebaseService: FirebaseServiceProtocol) {
+        self.firebaseService = firebaseService
+    }
     
     /// Fetch the goals of the user for a specfic date.
     func fetchGoals() async {
         do {
-            let goals = try await service.fetchGoals(selectedDate: selectedDate)
+            let goals = try await firebaseService.fetchGoals(selectedDate: selectedDate)
             
             await MainActor.run {
                 self.goals = goals
@@ -30,6 +34,15 @@ class GoalViewModel: ObservableObject {
         } catch {
             appError = AppError.customError(message: "Something went wrong when fetching your goals! Try again later.")
             print(error.localizedDescription)
+        }
+    }
+    
+    func checkCompletedForDay(_ selectedDate: Date) async -> Bool {
+        do {
+            let completed = try await firebaseService.checkCompletedForDay(selectedDate: selectedDate)
+            return completed
+        } catch {
+            return false
         }
     }
 }

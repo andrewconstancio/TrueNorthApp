@@ -2,11 +2,24 @@ import SwiftUI
 
 /// The root view for this app. 
 struct RootView: View {
-    /// Auth environment view model
-    @EnvironmentObject private var authVM: AuthViewModel
+    
+    /// The auth view model state object.
+    @StateObject var authVM: AuthViewModel
     
     /// The goal view model to handle all business logic.
-    @StateObject private var goalViewModel = GoalViewModel()
+    @StateObject private var goalViewModel: GoalViewModel
+    
+    let firebaseService: FirebaseServiceProtocol
+    
+    init(firebaseService: FirebaseServiceProtocol) {
+        self.firebaseService = firebaseService
+        self._authVM = StateObject(
+            wrappedValue: AuthViewModel(firebaseService: firebaseService)
+        )
+        self._goalViewModel = StateObject(
+            wrappedValue: GoalViewModel(firebaseService: firebaseService)
+        )
+    }
     
     var body: some View {
         switch authVM.authState {
@@ -62,9 +75,20 @@ struct RootView: View {
             .navigationDestination(for: AppRoutes.self) { route in
                 switch route {
                 case .goalAddVew:
-                    GoalAddEditView(goal: nil)
+                    GoalAddEditView(
+                        goal: nil,
+                        goalAddEditVM: GoalAddEditViewModel(
+                            editGoal: nil,
+                            firebaseService: firebaseService
+                        )
+                    )
                 case .goalDetail(let goal):
-                    GoalDetailView(goal: goal)
+                    GoalDetailView(
+                        goal: goal,
+                        goalDetailVM: GoalDetailViewModel(
+                            goal: goal, firebaseService: firebaseService
+                        )
+                    )
                 }
             }
         }
@@ -73,7 +97,7 @@ struct RootView: View {
     }
 }
 
-#Preview {
-    RootView()
-        .environmentObject(AuthViewModel())
-}
+//#Preview {
+//    RootView()
+//        .environmentObject(AuthViewModel())
+//}

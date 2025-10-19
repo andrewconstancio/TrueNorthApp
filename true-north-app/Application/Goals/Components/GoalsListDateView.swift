@@ -1,30 +1,32 @@
 import SwiftUI
 
 
-class GoalsListDateViewModel: ObservableObject {
-    private var service: GoalFirebaseService
-    
-    init(service: GoalFirebaseService = .init()) {
-        self.service = service
-    }
-    
-    func completedDay(_ selectedDate: Date) async -> Bool {
-        do {
-            let completed = try await service.checkCompletedForDay(selectedDate: selectedDate)
-            return completed
-        } catch {
-            return false
-        }
-    }
-}
+//class GoalsListDateViewModel: ObservableObject {
+//    private var firebaseService: FirebaseServiceProtocol
+//    
+//    init(firebaseService: FirebaseServiceProtocol) {
+//        self.firebaseService = firebaseService
+//    }
+//    
+//    func completedDay(_ selectedDate: Date) async -> Bool {
+//        do {
+//            let completed = try await firebaseService.checkCompletedForDay(selectedDate: selectedDate)
+//            return completed
+//        } catch {
+//            return false
+//        }
+//    }
+//}
 
 struct GoalsListDateView: View {
+    /// The goal view model.
+    @EnvironmentObject var goalVM: GoalViewModel
+    
     let date: Date
     let isSelected: Bool
     let isFuture: Bool
     let onTap: () -> Void
     
-    @StateObject var vm = GoalsListDateViewModel()
     @State var completed: Bool?
     
     var body: some View {
@@ -60,7 +62,7 @@ struct GoalsListDateView: View {
                 )
                 .onAppear {
                     Task {
-                        completed = await vm.completedDay(date)
+                        self.completed = await goalVM.checkCompletedForDay(date)
                     }
                 }
             }

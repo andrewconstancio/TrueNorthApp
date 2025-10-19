@@ -62,5 +62,5 @@ struct AddFullNameView: View {
 
 #Preview {
     AddFullNameView()
-        .environmentObject(AuthViewModel())
+        .environmentObject(AuthViewModel(firebaseService: FirebaseService()))
 }

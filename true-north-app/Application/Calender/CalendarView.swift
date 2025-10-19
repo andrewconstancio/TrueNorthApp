@@ -7,10 +7,14 @@ struct CalendarView: View {
     @EnvironmentObject var authVM: AuthViewModel
     
     /// The calendar view model.
-    @StateObject private var calendarVM = CalendarViewModel()
+    @ObservedObject var calendarVM: CalendarViewModel
     
     /// The calendar object the `HorizonCalendar` takes in.
-    private let calendar = Calendar.current
+    let calendar = Calendar.current
+    
+    init(calendarVM: CalendarViewModel) {
+        self.calendarVM = calendarVM
+    }
 
     /// The start date of the calendar is when the account is create.
     private var startDate: Date {

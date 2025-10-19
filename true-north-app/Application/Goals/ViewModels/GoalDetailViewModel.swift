@@ -15,12 +15,13 @@ class GoalDetailViewModel: ObservableObject {
     
     @Published var goal: Goal
     
-    init(goal: Goal) {
-        self.goal = goal
-    }
+    /// Firebase service.
+    let firebaseService: FirebaseServiceProtocol
     
-    /// Goals firebase service.
-    private let service = GoalFirebaseService()
+    init(goal: Goal, firebaseService: FirebaseServiceProtocol) {
+        self.goal = goal
+        self.firebaseService = firebaseService
+    }
     
     /// Save progress for a goal.
     ///
@@ -28,12 +29,12 @@ class GoalDetailViewModel: ObservableObject {
     ///
     func saveProgress(for goalId: String) async {
         do {
-            try await service.saveProgress(for: goalId)
-            let increment = try await service.entryAddedYesterday(for: goalId)
-            try await service.setGoalStreak(for: goalId, increment: increment)
+            try await firebaseService.saveProgress(for: goalId)
+            let increment = try await firebaseService.entryAddedYesterday(for: goalId)
+            try await firebaseService.setGoalStreak(for: goalId, increment: increment)
             
             
-            try await service.updateCompletedForDay()
+            try await firebaseService.updateCompletedForDay()
         } catch {
             print(error.localizedDescription)
         }
@@ -47,7 +48,7 @@ class GoalDetailViewModel: ObservableObject {
     func checkUpdated(for goal: Goal, selectedDate: Date) async {
         do {
             guard let id = goal.id else { return }
-            let completed = try await service.checkDailyEntry(
+            let completed = try await firebaseService.checkDailyEntry(
                 for: id,
                 selectedDate: selectedDate
             )
@@ -66,7 +67,7 @@ class GoalDetailViewModel: ObservableObject {
     @MainActor
     func refreshGoal(_ goalId: String) async -> Bool {
         do {
-            let goal = try await service.fetchGoal(by: goalId)
+            let goal = try await firebaseService.fetchGoal(by: goalId)
             self.goal = goal
             
             goalReEntryText = ""
