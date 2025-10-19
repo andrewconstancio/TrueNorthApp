@@ -20,15 +20,6 @@ struct GoalFirebaseService {
         guard let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: selectedDate)) else {
             fatalError("Could not get next date.")
         }
-        
-//        deleteAllData("GoalEntity")
-        
-//        let cachedGoals = try fetchCachedGoals(startOfNextDay: startOfNextDay)
-        
-//        if !cachedGoals.isEmpty {
-//            print("GOALS FROM CACHE")
-//            return cachedGoals
-//        }
 
         let snapshot = try await Firestore.firestore()
             .collection("goals")
@@ -40,14 +31,6 @@ struct GoalFirebaseService {
         let goals = try snapshot.documents.compactMap { doc in
             try doc.data(as: Goal.self)
         }
-        
-//        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: Date()) else {
-//            fatalError("Could not get next date.")
-//        }
-        
-//        if selectedDate < yesterday {
-//            cacheGoal(goals)
-//        }
         
         return goals
     }
@@ -63,18 +46,6 @@ struct GoalFirebaseService {
         goal.setUID(uid)
         
         try Firestore.firestore().collection("goals").addDocument(from: goal)
-        
-//        let docs = try await Firestore.firestore()
-//            .collection("completedGoalsForDay")
-//            .whereField("uid", isEqualTo: uid)
-//            .whereField("dateCreated", isEqualTo: Timestamp(date: Date()))
-//            .getDocuments()
-//            .documents
-//    
-//        
-//        for doc in docs {
-//            try await doc.reference.delete()
-//        }
     }
 
     /// Saves progress for a goal.
@@ -146,7 +117,6 @@ struct GoalFirebaseService {
         
         return !docs.isEmpty
     }
-    
     
     /// Fetches weather all of the goals were completed for the month
     /// - Parameter monthComponents: The month component to check
@@ -277,77 +247,4 @@ struct GoalFirebaseService {
             try await document.reference.delete()
         }
     }
-    
-//    func fetchCachedGoals(startOfNextDay: Date) throws -> [Goal] {
-//        let context = persistenceController.container.viewContext
-//        let request: NSFetchRequest<GoalEntity> = GoalEntity.fetchRequest()
-//        
-//        request.predicate = NSPredicate(format: "%K <= %@", #keyPath(GoalEntity.dateCreated), startOfNextDay as NSDate)
-//        
-//        do {
-//            let goals: [GoalEntity] = try context.fetch(request)
-//            return goals.map(\.toGoal)
-//        } catch {
-//            print("ERROR: Failed to fetch goals from CoreData")
-//            return []
-//        }
-//    }
-    
-//    func cacheGoal(_ goals: [Goal]) {
-//        let context = persistenceController.container.viewContext
-//        
-//        for goal in goals {
-//            let newGoal = GoalEntity(context: context)
-//            newGoal.docId = goal.id
-//            newGoal.category = goal.category
-//            newGoal.descriptionGoal = goal.description
-//            newGoal.title = goal.title
-//            newGoal.dateCreated = goal.dateCreated.dateValue()
-//            newGoal.endDate = goal.endDate
-//            newGoal.completed = goal.complete
-//        }
-//        
-//        do {
-//            try context.save()
-//            print("saved")
-//        } catch {
-//            print("ERROR: Failed to save goal to CoreData")
-//        }
-//    }
-    
-//    func deleteAllData(_ entity:String) {
-//        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entity)
-//        fetchRequest.returnsObjectsAsFaults = false
-//        do {
-//            let results = try persistenceController.container.viewContext.fetch(fetchRequest)
-//            for object in results {
-//                guard let objectData = object as? NSManagedObject else {continue}
-//                persistenceController.container.viewContext.delete(objectData)
-//            }
-//        } catch let error {
-//            print("Detele all data in \(entity) error :", error)
-//        }
-//    }
-    
-//    func cacheGoal(_ goals: [Goal]) {
-//        let context = persistenceController.container.viewContext
-//        
-//        for goal in goals {
-//            let newGoal = GoalEntity(context: context)
-//            newGoal.docId = goal.id
-//            newGoal.category = goal.category
-//            newGoal.descriptionGoal = goal.description
-//            newGoal.title = goal.title
-//            newGoal.dateCreated = goal.dateCreated.dateValue()
-//            newGoal.endDate = goal.endDate
-//            newGoal.completed = goal.complete
-//        }
-//        
-//        do {
-//            try context.save()
-//            print("saved")
-//        } catch {
-//            print("ERROR: Failed to save goal to CoreData")
-//        }
-//    }
 }

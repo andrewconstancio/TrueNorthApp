@@ -18,6 +18,8 @@ struct GoalsListView: View {
     /// Goal Category selected.
     @State private var categorySelected: GoalCategories?
     
+    @State private var showResetButton = false
+    
     /// Goals filtered by the category.
     private var filteredGoals: [Goal] {
         if let selected = categorySelected {
@@ -110,9 +112,10 @@ struct GoalsListView: View {
     private var categorySelector: some View {
         HStack {
             // Reset the goal category filter.
-            if categorySelected != nil {
+            if showResetButton {
                 Button {
                     withAnimation(.easeInOut(duration: 0.3)) {
+                        showResetButton = false
                         categorySelected = nil
                     }
                 } label: {
@@ -157,6 +160,13 @@ struct GoalsListView: View {
                 .background(.sunglow)
                 .clipShape(.capsule)
             }
+            
+            // Show the reset category filter button.
+            .onChange(of: categorySelected) { _, newValue in
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showResetButton = newValue != .none ? true : false
+                }
+            }
         }
         .padding(.horizontal)
     }
@@ -173,10 +183,12 @@ struct GoalsListView: View {
                         goal: goal,
                         selectedDate: $goalVM.selectedDate
                     )
+                    // Set the ID of the row for re-rendering.
+                    .id("\(String(describing: goal.id))-\(goalVM.selectedDate.timeIntervalSince1970)")
                     
-                    /// Navigate to the goal detail view.
+                    // Navigate to the goal detail view.
                     .onTapGesture {
-                        /// If its not the current day do not allow click into.
+                        // If its not the current day do not allow click into.
                         if !goalVM.selectedDate.isDateInPast() {
                             authVM.appPath.append(goal)
                         }
