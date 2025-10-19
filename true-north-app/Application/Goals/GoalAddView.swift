@@ -3,7 +3,7 @@ import Firebase
 
 struct GoalAddView: View {
     /// The goal view model.
-    @EnvironmentObject var goalVM: GoalViewModel
+    @StateObject var goalAddEditVM = GoalAddEditViewModel()
     
     /// The dismiss environment object.
     @Environment(\.dismiss) private var dismiss
@@ -32,15 +32,15 @@ struct GoalAddView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     Task {
-                        await goalVM.save()
+                        await goalAddEditVM.save()
                         dismiss()
                     }
                 } label: {
                     Text("Save")
                         .font(FontManager.Bungee.regular.font(size: 14))
-                        .foregroundStyle(goalVM.newGoalForm.isValid ? .sunglow : .sunglow.opacity(0.5))
+                        .foregroundStyle(goalAddEditVM.newGoalForm.isValid ? .sunglow : .sunglow.opacity(0.5))
                 }
-                .disabled(!goalVM.newGoalForm.isValid || goalVM.savingInProgress)
+                .disabled(!goalAddEditVM.newGoalForm.isValid || goalAddEditVM.savingInProgress)
             }
         }
         .background(.backgroundPrimary)
@@ -54,13 +54,13 @@ struct GoalAddView: View {
             
             VStack(alignment: .leading, spacing: 12) {
                 ZStack(alignment: .topLeading) {
-                    if goalVM.newGoalForm.name.isEmpty {
+                    if goalAddEditVM.newGoalForm.name.isEmpty {
                         Text("What do you want to achieve?")
                             .font(FontManager.Bungee.regular.font(size: 16))
                             .foregroundStyle(.textPrimary.opacity(0.2))
                     }
                     
-                    TextField("", text: $goalVM.newGoalForm.name)
+                    TextField("", text: $goalAddEditVM.newGoalForm.name)
                         .font(FontManager.Bungee.regular.font(size: 16))
                         .foregroundStyle(.textPrimary)
                         .frame(minHeight: 20)
@@ -72,21 +72,21 @@ struct GoalAddView: View {
                 descriptionEditor
             }
             .padding()
-            .modifier(FormSection(tintColor: goalVM.newGoalForm.selectedColor))
+            .modifier(FormSection(tintColor: goalAddEditVM.newGoalForm.selectedColor))
         }
     }
     
     /// The goals desciption.
     var descriptionEditor: some View {
         ZStack(alignment: .topLeading) {
-            if goalVM.newGoalForm.description.isEmpty && !isDescriptionFocused {
+            if goalAddEditVM.newGoalForm.description.isEmpty && !isDescriptionFocused {
                 Text("Add a detailed description of your goal...")
                     .font(FontManager.Bungee.regular.font(size: 16))
                     .foregroundStyle(.textPrimary.opacity(0.2))
                     .padding(.top, 8)
             }
 
-            TextEditor(text: $goalVM.newGoalForm.description)
+            TextEditor(text: $goalAddEditVM.newGoalForm.description)
                 .font(FontManager.Bungee.regular.font(size: 16))
                 .foregroundStyle(.textPrimary)
                 .focused($isDescriptionFocused)
@@ -102,7 +102,7 @@ struct GoalAddView: View {
             sectionHeader("Timeline")
             
             VStack(spacing: 16) {
-                if !goalVM.newGoalForm.isEndless {
+                if !goalAddEditVM.newGoalForm.isEndless {
                     HStack {
                         Text("Target Date")
                             .font(FontManager.Bungee.regular.font(size: 16))
@@ -110,7 +110,7 @@ struct GoalAddView: View {
                         Spacer()
                         
                         HStack {
-                            Text(goalVM.newGoalForm.endDate.formattedDateString)
+                            Text(goalAddEditVM.newGoalForm.endDate.formattedDateString)
                                 .font(FontManager.Bungee.regular.font(size: 14))
                                 .foregroundStyle(.textPrimary)
 
@@ -119,7 +119,7 @@ struct GoalAddView: View {
                         .overlay {
                             DatePicker(
                                 "",
-                                selection: $goalVM.newGoalForm.endDate,
+                                selection: $goalAddEditVM.newGoalForm.endDate,
                                 displayedComponents: .date
                             )
                             .labelsHidden()
@@ -141,12 +141,12 @@ struct GoalAddView: View {
                     
                     Spacer()
                     
-                    Toggle("", isOn: $goalVM.newGoalForm.isEndless)
+                    Toggle("", isOn: $goalAddEditVM.newGoalForm.isEndless)
                         .labelsHidden()
                 }
             }
             .padding()
-            .modifier(FormSection(tintColor: goalVM.newGoalForm.selectedColor))
+            .modifier(FormSection(tintColor: goalAddEditVM.newGoalForm.selectedColor))
         }
     }
     
@@ -163,20 +163,20 @@ struct GoalAddView: View {
                 Spacer()
                 
                 Menu {
-                    Picker(selection: $goalVM.newGoalForm.category) {
+                    Picker(selection: $goalAddEditVM.newGoalForm.category) {
                         ForEach(GoalCategories.allCases, id: \.self) { category in
                             Text(category.rawValue.capitalized)
                                 .tag(category.rawValue)
                         }
                     } label: {}
                 } label: {
-                    Text(goalVM.newGoalForm.category)
+                    Text(goalAddEditVM.newGoalForm.category)
                         .font(FontManager.Bungee.regular.font(size: 14))
                         .foregroundStyle(.textPrimary)
                 }
             }
             .padding()
-            .modifier(FormSection(tintColor: goalVM.newGoalForm.selectedColor))
+            .modifier(FormSection(tintColor: goalAddEditVM.newGoalForm.selectedColor))
         }
     }
     

@@ -63,9 +63,8 @@ struct RootView: View {
                 switch route {
                 case .goalAddVew:
                     GoalAddView()
-                        .environmentObject(goalViewModel)
                 }
-            }
+            } 
             .navigationDestination(for: Goal.self) { goal in
                 GoalDetailView(goal: goal)
             }

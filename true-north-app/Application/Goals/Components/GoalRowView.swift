@@ -35,7 +35,6 @@ struct GoalRowView: View {
                 )
             }
         }
-        .id(selectedDate)
         .onAppear {
             Task {
                 guard let id = goal.id else { return }
