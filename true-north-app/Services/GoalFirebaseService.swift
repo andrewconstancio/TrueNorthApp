@@ -35,6 +35,22 @@ struct GoalFirebaseService {
         return goals
     }
     
+    /// Fetches a single goal by its ID.
+    /// - Parameter goalId: The ID of the goal to fetch.
+    /// - Returns: The goal with the matching ID.
+    func fetchGoal(by goalId: String) async throws -> Goal {
+        let document = try await Firestore.firestore()
+            .collection("goals")
+            .document(goalId)
+            .getDocument()
+        
+        guard let goal = try? document.data(as: Goal.self) else {
+            throw NSError(domain: "GoalFirebaseService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Goal not found"])
+        }
+        
+        return goal
+    }
+    
     /// Saves a new goals for the user.
     /// - Parameter goal: The new user goal.
     func saveGoal(_ goal: Goal) async throws {
@@ -46,6 +62,14 @@ struct GoalFirebaseService {
         goal.setUID(uid)
         
         try Firestore.firestore().collection("goals").addDocument(from: goal)
+    }
+    
+    
+    /// Update a users goal
+    /// - Parameter goal: The goals updates object. 
+    func updateGoal(_ goal: Goal) async throws {
+        guard let id = goal.id else { return }
+        try Firestore.firestore().collection("goals").document(id).setData(from: goal)
     }
 
     /// Saves progress for a goal.
