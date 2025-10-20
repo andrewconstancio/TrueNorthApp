@@ -1,15 +1,15 @@
 import SwiftUI
 
-//private struct FirebaseServiceKey: EnvironmentKey {
-//    static let defaultValue: FirebaseServiceProtocol = FirebaseService()
-//}
-//
-//extension EnvironmentValues {
-//    var firebaseService: FirebaseServiceProtocol {
-//        get { self[FirebaseServiceKey.self] }
-//        set { self[FirebaseServiceKey.self] = newValue }
-//    }
-//}
+private struct FirebaseServiceKey: EnvironmentKey {
+    static let defaultValue: FirebaseServiceProtocol = FirebaseService()
+}
+
+extension EnvironmentValues {
+    var firebaseService: FirebaseServiceProtocol {
+        get { self[FirebaseServiceKey.self] }
+        set { self[FirebaseServiceKey.self] = newValue }
+    }
+}
 
 @main
 struct GoalTrackerApp: App {
@@ -19,21 +19,21 @@ struct GoalTrackerApp: App {
     /// The notification manager state object.
     @StateObject var notificationManager = NotificationService()
     
-    /// Persistent data container for Core Data.
-    @StateObject var persistentContainer = PersistenceController()
-    
     /// The firebase service object.
-    private var firebaseService = FirebaseService()
+    private let firebaseService = FirebaseService()
 
     var body: some Scene {
         WindowGroup {
-            RootView(firebaseService: firebaseService)
-                .environment(\.colorScheme, .dark)
-                .environmentObject(notificationManager)
-                .environment(\.managedObjectContext, persistentContainer.container.viewContext)
-                .task {
-                    await notificationManager.request()
-                }
+            RootView(
+                authVM: AuthViewModel(firebaseService: firebaseService),
+                goalViewModel: GoalViewModel(firebaseService: firebaseService)
+            )
+            .environment(\.colorScheme, .dark)
+            .environment(\.firebaseService, firebaseService)
+            .environmentObject(notificationManager)
+            .task {
+                await notificationManager.request()
+            }
         }
     }
 }

@@ -1,31 +1,39 @@
 import SwiftUI
 
-class SettingsViewModel: ObservableObject {
-    @Published var firstName = ""
-    @Published var lastName = ""
-     
-    func setup(user: User) {
-        self.firstName = user.firstName
-        self.lastName = user.lastName
-    }
-}
-
+/// Main settings view for managing user profile and app preferences.
+///
+/// Provides options to:
+/// - Edit user's full name
+/// - Change profile picture
+/// - Sign out of the app
+///
 struct SettingsView: View {
-    /// Auth view model.
+    /// Auth view model for authentication operations.
     @EnvironmentObject var authVM: AuthViewModel
     
+    /// Settings view model for managing profile edit state.
     @StateObject private var settingsVM = SettingsViewModel()
     
-    /// Show the sign out alert.
+    /// Flag to show the sign out confirmation alert.
     @State private var showingSignOutAlert = false
     
+    /// Flag to show the edit name sheet.
     @State private var showEditNameSheet = false
+    
+    /// Flag to show the edit profile picture sheet.
+    @State private var showEditProfilePictureSheet = false
     
     var body: some View {
         VStack {
-            titleView
+            Text("Settings")
+                .foregroundStyle(.textSecondary)
+                .font(FontManager.Bungee.regular.font(size: 16))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, 16)
+            
             ScrollView {
                 VStack(spacing: 22) {
+                    // Change the users name.
                     SettingsRow(
                         title: "Change name",
                         icon: "tag.fill",
@@ -34,14 +42,16 @@ struct SettingsView: View {
                         }
                     )
                     
+                    // Change the users profile picture.
                     SettingsRow(
                         title: "Change profile picture",
                         icon: "person.fill",
                         action: {
-                            showingSignOutAlert = true
+                            showEditProfilePictureSheet = true
                         }
                     )
                     
+                    // Sign out.
                     SettingsRow(
                         title: "Sign out",
                         icon: "hand.wave.fill",
@@ -67,93 +77,12 @@ struct SettingsView: View {
         .sheet(isPresented: $showEditNameSheet) {
             EditFullNameView(settingsVM: settingsVM)
         }
+        .sheet(isPresented: $showEditProfilePictureSheet) {
+            EditProfilePictureView()
+        }
         .onAppear {
             guard let user = authVM.authState.currentUser else { return }
             settingsVM.setup(user: user)
-        }
-    }
-    
-    /// Title.
-    private var titleView: some View {
-        Text("Settings")
-            .foregroundStyle(.textSecondary)
-            .font(FontManager.Bungee.regular.font(size: 16))
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, 16)
-    }
-}
-
-struct SettingsRow: View {
-    let title: String
-    let icon: String
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(Color.backgroundLighter)
-                    .frame(width: 36, height: 36)
-                    .overlay(
-                        Image(systemName: icon)
-                            .foregroundStyle(.textSecondary)
-                    )
-                
-                Text(title)
-                    .foregroundStyle(.textPrimary)
-                    .font(FontManager.Bungee.regular.font(size: 16))
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.textSecondary)
-                    .fontWeight(.bold)
-            }
-          
-        }
-    }
-}
-
-struct EditFullNameView: View {
-    
-    @ObservedObject var settingsVM: SettingsViewModel
-    
-    @FocusState private var isKeyboardFocused: Bool
-    
-    var body: some View {
-        VStack {
-            Text("Edit your name")
-                .font(FontManager.Bungee.regular.font(size: 22))
-                .foregroundStyle(.textPrimary)
-            
-            // First name
-            CustomInputField(
-                imageName: nil,
-                placeholderText: "First Name",
-                keyboardType: .default,
-                text: $settingsVM.firstName
-            )
-            .focused($isKeyboardFocused)
-            
-            // Last name
-            CustomInputField(
-                imageName: nil,
-                placeholderText: "Last Name",
-                keyboardType: .default,
-                text: $settingsVM.lastName
-            )
-            
-            Text("Save")
-                .font(FontManager.Bungee.regular.font(size: 18))
-                .foregroundStyle(.textPrimary)
-                .frame(width: 340, height: 65)
-                .background(Color.sunglow.opacity(0.8))
-                .clipShape(Capsule())
-                .padding()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .background(Color.backgroundPrimary)
-        .onAppear {
-            isKeyboardFocused = true
         }
     }
 }

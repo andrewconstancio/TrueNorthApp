@@ -19,14 +19,7 @@ protocol FirebaseServiceProtocol {
 }
 
 class FirebaseService: ObservableObject, FirebaseServiceProtocol {
-    let persistenceController: PersistenceController
-
-    init(persistenceController: PersistenceController = .shared) {
-        self.persistenceController = persistenceController
-    }
-    
     // MARK: User
-    
     func fetchUser(withUid uid: String, completion: @escaping(User) -> Void) {
         Firestore.firestore().collection("users")
             .document(uid)

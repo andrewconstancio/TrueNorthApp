@@ -184,10 +184,7 @@ struct GoalsListView: View {
                 ForEach(filteredGoals) { goal in
                     GoalRowView(
                         goal: goal,
-                        selectedDate: $goalVM.selectedDate,
-                        goalRowVM: GoalRowViewModel(
-                            firebaseService: goalVM.firebaseService
-                        )
+                        selectedDate: $goalVM.selectedDate
                     )
                     // Set the ID of the row for re-rendering.
                     .id("\(String(describing: goal.id))-\(goalVM.selectedDate.timeIntervalSince1970)")

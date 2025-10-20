@@ -3,22 +3,21 @@ import SwiftUI
 /// The root view for this app. 
 struct RootView: View {
     
+    /// Firebase service from environment - used for passing to child views.
+    @Environment(\.firebaseService) private var firebaseService
+    
     /// The auth view model state object.
-    @StateObject var authVM: AuthViewModel
+    @StateObject private var authVM: AuthViewModel
     
     /// The goal view model to handle all business logic.
     @StateObject private var goalViewModel: GoalViewModel
     
-    let firebaseService: FirebaseServiceProtocol
-    
-    init(firebaseService: FirebaseServiceProtocol) {
-        self.firebaseService = firebaseService
-        self._authVM = StateObject(
-            wrappedValue: AuthViewModel(firebaseService: firebaseService)
-        )
-        self._goalViewModel = StateObject(
-            wrappedValue: GoalViewModel(firebaseService: firebaseService)
-        )
+    /// Initialize RootView with pre-configured ViewModels.
+    /// We need to pass firebaseService here because @StateObject needs to be initialized
+    /// in init(), but @Environment values aren't available yet.
+    init(authVM: AuthViewModel, goalViewModel: GoalViewModel) {
+        self._authVM = StateObject(wrappedValue: authVM)
+        self._goalViewModel = StateObject(wrappedValue: goalViewModel)
     }
     
     var body: some View {

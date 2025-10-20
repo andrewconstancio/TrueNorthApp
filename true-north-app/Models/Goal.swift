@@ -74,18 +74,3 @@ struct Goal: Identifiable, Codable, Hashable {
     }
 }
 
-extension GoalEntity {
-    var toGoal: Goal {
-        Goal(
-            id: self.docId ?? "",
-            title: self.title ?? "",
-            description: self.descriptionGoal ?? "",
-            dateCreated: Timestamp(date: self.dateCreated ?? Date()),
-            complete: self.completed,
-            category: self.category ?? "",
-            uid: self.uid ?? "",
-            streak: Int(self.streak),
-            endDate: self.endDate ?? Date()
-        )
-    }
-}
