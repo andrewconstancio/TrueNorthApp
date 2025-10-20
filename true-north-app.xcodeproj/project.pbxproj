@@ -13,6 +13,7 @@
 		1C05F7E02E148DCB00F52C65 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 1C05F7DF2E148DCB00F52C65 /* GoogleSignIn */; };
 		1C05F7E22E148DCB00F52C65 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 1C05F7E12E148DCB00F52C65 /* GoogleSignInSwift */; };
 		1C0C1D9D2E39606900CC888C /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 1C0C1D9C2E39606900CC888C /* FirebaseMessaging */; };
+		1C7523242EA582AD0027F897 /* HorizonCalendar in Frameworks */ = {isa = PBXBuildFile; productRef = 1C7523232EA582AD0027F897 /* HorizonCalendar */; };
 		1C78B3372EA0395E004FB1A7 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 1C78B3362EA0395E004FB1A7 /* Lottie */; };
 /* End PBXBuildFile section */
 
@@ -77,6 +78,7 @@
 			files = (
 				1C0C1D9D2E39606900CC888C /* FirebaseMessaging in Frameworks */,
 				1C78B3372EA0395E004FB1A7 /* Lottie in Frameworks */,
+				1C7523242EA582AD0027F897 /* HorizonCalendar in Frameworks */,
 				1C05F7E22E148DCB00F52C65 /* GoogleSignInSwift in Frameworks */,
 				1C05F33C2E04885B00F52C65 /* FirebaseAuth in Frameworks */,
 				1C05F7E02E148DCB00F52C65 /* GoogleSignIn in Frameworks */,
@@ -149,6 +151,7 @@
 				1C05F7E12E148DCB00F52C65 /* GoogleSignInSwift */,
 				1C0C1D9C2E39606900CC888C /* FirebaseMessaging */,
 				1C78B3362EA0395E004FB1A7 /* Lottie */,
+				1C7523232EA582AD0027F897 /* HorizonCalendar */,
 			);
 			productName = "true-north-app";
 			productReference = 1C05F3092E04803A00F52C65 /* true-north-app.app */;
@@ -236,6 +239,7 @@
 				1C05F33A2E04885B00F52C65 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				1C05F7DE2E148DCB00F52C65 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				1C1E05F12EA0379C00A1C019 /* XCRemoteSwiftPackageReference "lottie-ios" */,
+				1C7523222EA582AD0027F897 /* XCRemoteSwiftPackageReference "HorizonCalendar" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1C05F30A2E04803A00F52C65 /* Products */;
@@ -644,6 +648,14 @@
 				minimumVersion = 4.5.2;
 			};
 		};
+		1C7523222EA582AD0027F897 /* XCRemoteSwiftPackageReference "HorizonCalendar" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/HorizonCalendar";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -676,6 +688,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1C05F33A2E04885B00F52C65 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseMessaging;
+		};
+		1C7523232EA582AD0027F897 /* HorizonCalendar */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1C7523222EA582AD0027F897 /* XCRemoteSwiftPackageReference "HorizonCalendar" */;
+			productName = HorizonCalendar;
 		};
 		1C78B3362EA0395E004FB1A7 /* Lottie */ = {
 			isa = XCSwiftPackageProductDependency;

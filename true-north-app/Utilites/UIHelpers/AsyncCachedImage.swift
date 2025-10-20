@@ -63,25 +63,43 @@ struct AsyncCachedImage<ImageView: View, PlaceholderView: View>: View {
                 return nil
             }
             
+            let urlRequest = URLRequest(url: url)
+            
             /// Check if the image is cached.
-            if let cachedResponse = URLCache.shared.cachedResponse(for: .init(url: url)) {
-                return UIImage(data: cachedResponse.data)
-            } else {
-                /// Show placeholder while downloading.
-                image = nil
-                
-                let (data, response) = try await URLSession.shared.data(from: url)
-                
-                /// Save image data into the cache.
-                URLCache.shared.storeCachedResponse(.init(response: response, data: data), for: .init(url: url))
-                
-                guard let image = UIImage(data: data) else {
-                    return nil
+            if let cachedResponse = URLCache.shared.cachedResponse(for: urlRequest) {
+                // Verify cached data is valid before using it
+                if let cachedImage = UIImage(data: cachedResponse.data) {
+                    return cachedImage
+                } else {
+                    // Remove corrupted cache entry
+                    print("Corrupted cached image detected, removing from cache")
+                    URLCache.shared.removeCachedResponse(for: urlRequest)
                 }
-                
-                return image
             }
-        } catch {
+            
+            /// Show placeholder while downloading.
+            image = nil
+            
+            let (data, response) = try await URLSession.shared.data(from: url)
+            
+            // Verify the downloaded data is a valid image before caching
+            guard let downloadedImage = UIImage(data: data) else {
+                print("Downloaded data is not a valid image from: \(url)")
+                // Don't cache invalid image data
+                return nil
+            }
+            
+            /// Save valid image data into the cache.
+            URLCache.shared.storeCachedResponse(.init(response: response, data: data), for: urlRequest)
+            
+            return downloadedImage
+        } catch let error as NSError {
+            // Log specific error for debugging
+            if error.code == -1017 {
+                print("Cannot parse response as image from: \(url?.absoluteString ?? "unknown")")
+            } else {
+                print("Image download failed: \(error.localizedDescription)")
+            }
             return nil
         }
     }

@@ -2,11 +2,23 @@ import SwiftUI
 
 /// The root view for this app. 
 struct RootView: View {
-    /// Auth environment view model
-    @EnvironmentObject private var authVM: AuthViewModel
+    
+    /// Firebase service from environment - used for passing to child views.
+    @Environment(\.firebaseService) private var firebaseService
+    
+    /// The auth view model state object.
+    @StateObject private var authVM: AuthViewModel
     
     /// The goal view model to handle all business logic.
-    @StateObject private var goalViewModel = GoalViewModel()
+    @StateObject private var goalViewModel: GoalViewModel
+    
+    /// Initialize RootView with pre-configured ViewModels.
+    /// We need to pass firebaseService here because @StateObject needs to be initialized
+    /// in init(), but @Environment values aren't available yet.
+    init(authVM: AuthViewModel, goalViewModel: GoalViewModel) {
+        self._authVM = StateObject(wrappedValue: authVM)
+        self._goalViewModel = StateObject(wrappedValue: goalViewModel)
+    }
     
     var body: some View {
         switch authVM.authState {
@@ -62,9 +74,20 @@ struct RootView: View {
             .navigationDestination(for: AppRoutes.self) { route in
                 switch route {
                 case .goalAddVew:
-                    GoalAddEditView(goal: nil)
+                    GoalAddEditView(
+                        goal: nil,
+                        goalAddEditVM: GoalAddEditViewModel(
+                            editGoal: nil,
+                            firebaseService: firebaseService
+                        )
+                    )
                 case .goalDetail(let goal):
-                    GoalDetailView(goal: goal)
+                    GoalDetailView(
+                        goal: goal,
+                        goalDetailVM: GoalDetailViewModel(
+                            goal: goal, firebaseService: firebaseService
+                        )
+                    )
                 }
             }
         }
@@ -73,7 +96,7 @@ struct RootView: View {
     }
 }
 
-#Preview {
-    RootView()
-        .environmentObject(AuthViewModel())
-}
+//#Preview {
+//    RootView()
+//        .environmentObject(AuthViewModel())
+//}

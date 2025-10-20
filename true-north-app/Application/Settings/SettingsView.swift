@@ -1,33 +1,57 @@
 import SwiftUI
 
+/// Main settings view for managing user profile and app preferences.
+///
+/// Provides options to:
+/// - Edit user's full name
+/// - Change profile picture
+/// - Sign out of the app
+///
 struct SettingsView: View {
-    /// Auth view model.
+    /// Auth view model for authentication operations.
     @EnvironmentObject var authVM: AuthViewModel
     
-    /// Show the sign out alert.
+    /// Settings view model for managing profile edit state.
+    @StateObject private var settingsVM = SettingsViewModel()
+    
+    /// Flag to show the sign out confirmation alert.
     @State private var showingSignOutAlert = false
+    
+    /// Flag to show the edit name sheet.
+    @State private var showEditNameSheet = false
+    
+    /// Flag to show the edit profile picture sheet.
+    @State private var showEditProfilePictureSheet = false
     
     var body: some View {
         VStack {
-            titleView
+            Text("Settings")
+                .foregroundStyle(.textSecondary)
+                .font(FontManager.Bungee.regular.font(size: 16))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, 16)
+            
             ScrollView {
                 VStack(spacing: 22) {
+                    // Change the users name.
                     SettingsRow(
                         title: "Change name",
-                        icon: "hand.wave.fill",
+                        icon: "tag.fill",
                         action: {
-                            showingSignOutAlert = true
+                            showEditNameSheet = true
                         }
                     )
                     
+                    // Change the users profile picture.
                     SettingsRow(
                         title: "Change profile picture",
-                        icon: "hand.wave.fill",
+                        icon: "person.fill",
                         action: {
-                            showingSignOutAlert = true
+                            showEditProfilePictureSheet = true
                         }
                     )
                     
+                    // Sign out.
                     SettingsRow(
                         title: "Sign out",
                         icon: "hand.wave.fill",
@@ -41,10 +65,6 @@ struct SettingsView: View {
                     RoundedRectangle(cornerRadius: 24)
                         .fill(Color.backgroundSecondary)
                 )
-//                .background(
-//                    RoundedRectangle(cornerRadius: 16)
-//                        .fill(Color.backgroundLighter.opacity(0.7))
-//                )
             }
         }
         .padding(.top, 20)
@@ -54,52 +74,22 @@ struct SettingsView: View {
         .signOutAlert(isPresented: $showingSignOutAlert) {
             authVM.logout()
         }
-    }
-    
-    /// Title.
-    private var titleView: some View {
-        HStack(alignment: .center) {
-            Text("Settings")
-                .foregroundStyle(.textSecondary)
-                .font(FontManager.Bungee.regular.font(size: 16))
-            Spacer()
+        .sheet(isPresented: $showEditNameSheet) {
+            EditFullNameView(settingsVM: settingsVM)
         }
-    }
-}
-
-struct SettingsRow: View {
-    let title: String
-    let icon: String
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(Color.backgroundLighter)
-                    .frame(width: 36, height: 36)
-                    .overlay(
-                        Image(systemName: icon)
-                            .foregroundStyle(.textSecondary)
-                    )
-                
-                Text(title)
-                    .foregroundStyle(.textPrimary)
-                    .font(FontManager.Bungee.regular.font(size: 16))
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.textSecondary)
-                    .fontWeight(.bold)
-            }
-          
+        .sheet(isPresented: $showEditProfilePictureSheet) {
+            EditProfilePictureView()
+        }
+        .onAppear {
+            guard let user = authVM.authState.currentUser else { return }
+            settingsVM.setup(user: user)
         }
     }
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         SettingsView()
-            .environmentObject(AuthViewModel())
+            .environmentObject(AuthViewModel(firebaseService: FirebaseService()))
     }
 }

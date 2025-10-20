@@ -1,8 +1,8 @@
 import SwiftUI
 
-class CalendarViewModel : ObservableObject {
+class CalendarViewModel: ObservableObject {
     /// Firebase goal service.
-    private var goalFirebaseService: GoalFirebaseService
+    private var firebaseService: FirebaseServiceProtocol
     
     /// Array of days for the month, true or false if all the goals where completed for the day.
     @Published var completedDays = [Date: Bool]()
@@ -14,16 +14,16 @@ class CalendarViewModel : ObservableObject {
     @Published var showAppError = false
     
     /// Initializer for this view model.
-    /// - Parameter goalFirebaseService: Firebase goal service.
-    init(goalFirebaseService: GoalFirebaseService = .init()) {
-        self.goalFirebaseService = goalFirebaseService
+    /// - Parameter firebaseService: Firebase goal service.
+    init(firebaseService: FirebaseServiceProtocol) {
+        self.firebaseService = firebaseService
     }
     
     /// Fetches and array the represent the days of the month and where the goals were completed.
     /// - Parameter month: The month to fetch.
     func fetchDaysCompleted(for month: DateComponents) async {
         do {
-            let completed = try await goalFirebaseService.fetchCompletedDaysFor(monthComponents: month)
+            let completed = try await firebaseService.fetchCompletedDaysFor(monthComponents: month)
             
             await MainActor.run {
                 self.completedDays = completed

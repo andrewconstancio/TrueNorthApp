@@ -8,15 +8,14 @@ class GoalAddEditViewModel: ObservableObject {
     /// Flag if currently saving a goal.
     @Published var savingInProgress = false
     
-    /// Goals service.
-    private let service = GoalFirebaseService()
-    
     /// The goal to be updates.
     private var editGoal: Goal?
     
-    /// The initalizer for this view model.
-    /// - Parameter editGoal: The goal to be edited.
-    init(editGoal: Goal?) {
+    /// Firebase service.
+    let firebaseService: FirebaseServiceProtocol
+    
+    init(editGoal: Goal?, firebaseService: FirebaseServiceProtocol) {
+        self.firebaseService = firebaseService
         self.editGoal = editGoal
         
         if editGoal != nil {
@@ -52,7 +51,7 @@ class GoalAddEditViewModel: ObservableObject {
                 savingInProgress = true
             }
             
-            try await service.saveGoal(goal)
+            try await firebaseService.saveGoal(goal)
         } catch {
             savingInProgress = false
             print(error.localizedDescription)
@@ -76,7 +75,7 @@ class GoalAddEditViewModel: ObservableObject {
                 endDate: goalForm.isEndless ? nil : goalForm.endDate
             )
             
-            try await service.updateGoal(goal)
+            try await firebaseService.updateGoal(goal)
         } catch {
             print(error.localizedDescription)
         }
@@ -88,7 +87,7 @@ class GoalAddEditViewModel: ObservableObject {
     ///
     func delete(for goal: Goal) async {
         do {
-            try await service.deleteGoalAndHistory(for: goal)
+            try await firebaseService.deleteGoalAndHistory(for: goal)
         } catch {
             print(error.localizedDescription)
         }
