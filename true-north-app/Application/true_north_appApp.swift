@@ -28,12 +28,12 @@ struct GoalTrackerApp: App {
                 authVM: AuthViewModel(firebaseService: firebaseService),
                 goalViewModel: GoalViewModel(firebaseService: firebaseService)
             )
-            .environment(\.colorScheme, .dark)
             .environment(\.firebaseService, firebaseService)
             .environmentObject(notificationManager)
             .task {
                 await notificationManager.request()
             }
+            .preferredColorScheme(.dark)
         }
     }
 }

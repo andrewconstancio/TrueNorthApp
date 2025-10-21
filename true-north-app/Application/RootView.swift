@@ -37,6 +37,7 @@ struct RootView: View {
     var authenticationFlow: some View {
         NavigationStack(path: $authVM.authPath) {
             LoginView()
+                .environmentObject(authVM)
                 .navigationDestination(for: AuthRoute.self) { route in
                     switch route {
                     case .addProfilePicture:
@@ -52,6 +53,7 @@ struct RootView: View {
     var profileSetupFlow: some View {
         NavigationStack(path: $authVM.authPath) {
             AddFullNameView()
+                .environmentObject(authVM)
                 .navigationDestination(for: AuthRoute.self) { route in
                     switch route {
                     case .addProfilePicture:

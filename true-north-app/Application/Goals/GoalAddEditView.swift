@@ -18,6 +18,9 @@ struct GoalAddEditView: View {
     
     /// Flag to show the delete goal popover.
     @State private var showDeleteGoalPopover = false
+    
+    /// Flag to ensure the keyboard is focus on appear.
+    @FocusState private var isTitleKeyboardFocused: Bool
 
     var body: some View {
         content
@@ -55,6 +58,9 @@ struct GoalAddEditView: View {
         }
         .background(.backgroundPrimary)
         .hideKeyboardOnTap()
+        .onAppear {
+            isTitleKeyboardFocused = true
+        }
     }
     
     /// The goals title.
@@ -75,6 +81,7 @@ struct GoalAddEditView: View {
                         .foregroundStyle(.textPrimary)
                         .frame(minHeight: 20)
                         .accessibilityLabel("Goal name")
+                        .focused($isTitleKeyboardFocused)
                 }
                 .padding()
                 
