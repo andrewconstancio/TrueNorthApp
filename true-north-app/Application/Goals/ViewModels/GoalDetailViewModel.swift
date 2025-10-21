@@ -32,8 +32,6 @@ class GoalDetailViewModel: ObservableObject {
             try await firebaseService.saveProgress(for: goalId)
             let increment = try await firebaseService.entryAddedYesterday(for: goalId)
             try await firebaseService.setGoalStreak(for: goalId, increment: increment)
-            
-            
             try await firebaseService.updateCompletedForDay()
         } catch {
             print(error.localizedDescription)

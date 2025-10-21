@@ -7,6 +7,7 @@ protocol FirebaseServiceProtocol {
     func fetchGoals(selectedDate: Date) async throws -> [Goal]
     func fetchGoal(by goalId: String) async throws -> Goal
     func saveGoal(_ goal: Goal) async throws
+    func deleteDailyEntryCompleted() async throws
     func updateGoal(_ goal: Goal) async throws
     func saveProgress(for goalId: String) async throws
     func updateCompletedForDay() async throws
@@ -104,6 +105,30 @@ class FirebaseService: ObservableObject, FirebaseServiceProtocol {
         try Firestore.firestore().collection("goals").addDocument(from: goal)
     }
     
+    func deleteDailyEntryCompleted() async throws {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            return
+        }
+        
+        let calendar = Calendar.current
+        guard let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: Date())) else {
+            fatalError("Could not get next date.")
+        }
+        
+        let startOfToday =  calendar.startOfDay(for: Date())
+        
+        try await Firestore.firestore()
+            .collection("completedGoalsForDay")
+            .whereField("uid", isEqualTo: uid)
+            .whereField("dateCreated", isLessThan: startOfNextDay)
+            .whereField("dateCreated", isGreaterThan: startOfToday)
+            .getDocuments()
+            .documents
+            .forEach { doc in
+                doc.reference.delete()
+            }
+    }
+    
     
     /// Update a users goal
     /// - Parameter goal: The goals updates object.
@@ -128,7 +153,6 @@ class FirebaseService: ObservableObject, FirebaseServiceProtocol {
         try await Firestore.firestore().collection("userGoalUpdates").addDocument(data: data)
     }
     
-    
     /// Updates that the goals were completed for the current day.
     func updateCompletedForDay() async throws {
         guard let uid = Auth.auth().currentUser?.uid else { return }
@@ -136,6 +160,7 @@ class FirebaseService: ObservableObject, FirebaseServiceProtocol {
         let completed = try await Firestore.firestore()
             .collection("userGoalUpdates")
             .whereField("dateCreated", isDateInToday: Date())
+            .whereField("uid", isEqualTo: uid)
             .getDocuments()
             .count
         
@@ -144,6 +169,9 @@ class FirebaseService: ObservableObject, FirebaseServiceProtocol {
             .whereField("uid", isEqualTo: uid)
             .getDocuments()
             .count
+        
+        print("completed", completed)
+        print("totalCount", totalCount)
             
         if completed == totalCount {
             let data = [
@@ -300,8 +328,10 @@ class FirebaseService: ObservableObject, FirebaseServiceProtocol {
     ///
     func deleteGoalAndHistory(for goal: Goal) async throws {
         guard let goalId = goal.id else { return }
+        // Delete the goal.
         try await Firestore.firestore().collection("goals").document(goalId).delete()
         
+        // Delete the goals updates
         let snapshot = try await Firestore.firestore()
             .collection("userGoalUpdates")
             .whereField("goalId", isEqualTo: goalId)

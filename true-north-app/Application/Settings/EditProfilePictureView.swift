@@ -19,6 +19,9 @@ struct EditProfilePictureView: View {
     /// The newly selected and cropped profile image, waiting to be saved.
     @State private var updateProfileImage: UIImage?
     
+    /// Flag for is loading uploading new photo. 
+    @State private var isloading = false
+    
     var body: some View {
         VStack {
             if updateProfileImage != nil {
@@ -32,6 +35,7 @@ struct EditProfilePictureView: View {
         .fullScreenCover(isPresented: $showEditProfilePicture) {
             ImageMoveAndScaleSheet(croppedImage: $updateProfileImage)
         }
+        .loadingOverlay(isLoading: isloading)
     }
     
     /// Initial view showing the current profile picture with a change button.
@@ -85,6 +89,7 @@ struct EditProfilePictureView: View {
             Button {
                 print("save new image")
                 Task {
+                    isloading = true
                     await authVM.saveProfileImage(uid: uid, image: image, refreshUser: true)
                     dismiss()
                 }

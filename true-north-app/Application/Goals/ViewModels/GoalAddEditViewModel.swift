@@ -51,7 +51,11 @@ class GoalAddEditViewModel: ObservableObject {
                 savingInProgress = true
             }
             
+            // Save the goal to firebase.
             try await firebaseService.saveGoal(goal)
+            
+            // Clear the daily entries were completed.
+            try await firebaseService.deleteDailyEntryCompleted()
         } catch {
             savingInProgress = false
             print(error.localizedDescription)
