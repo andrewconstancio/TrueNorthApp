@@ -74,3 +74,15 @@ struct Goal: Identifiable, Codable, Hashable {
     }
 }
 
+struct GoalNote: Codable, Hashable {
+    @DocumentID var id: String?
+    var goalId: String
+    var dateCreated: Timestamp
+    var note: String
+    var uid: String
+    
+    mutating func setUID(_ uid: String) {
+        self.uid = uid
+    }
+}
+

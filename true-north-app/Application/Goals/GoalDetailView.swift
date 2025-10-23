@@ -18,6 +18,9 @@ struct GoalDetailView: View {
     /// Flag to show the edit view.
     @State private var showEditGoalSheet = false
     
+    /// Flag to show the add note view.
+    @State private var showAddNoteSheet = false
+    
     /// Flag to play the success animation when completing a daily entry.
     @State private var playSuccessAnimation = false
     
@@ -40,15 +43,21 @@ struct GoalDetailView: View {
             confettiView
             mainContent
         }
-        .padding()
+//        .padding()
         .scrollIndicators(.hidden)
         .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                addNoteButton
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 editButton
             }
         }
         .onChange(of: goalDetailVM.goalReEntryText) {_, _ in
             goalDetailVM.handleGoalTextChange()
+        }
+        .sheet(isPresented: $showAddNoteSheet) {
+            AddNoteView(goalDetailVM: goalDetailVM)
         }
         .sheet(isPresented: $showEditGoalSheet) {
             NavigationStack {
@@ -74,7 +83,6 @@ struct GoalDetailView: View {
                     }
             }
         }
-        .background(Color.backgroundPrimary.ignoresSafeArea())
         .errorAlert(
             isPresented: $goalDetailVM.showAppError,
             error: goalDetailVM.appError
@@ -84,6 +92,10 @@ struct GoalDetailView: View {
         // Show the retyping goal keyboard on appear.
         .onAppear {
             isKeyboardFocused = true
+            
+            Task {
+                await goalDetailVM.fetchNotes()
+            }
         }
         
         // Check to see if the goals daily saved was made.
@@ -93,22 +105,27 @@ struct GoalDetailView: View {
                 selectedDate: Date()
             )
         }
+        .background(Color.backgroundPrimary.ignoresSafeArea())
     }
     
     /// Main Content.
     private var mainContent: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            goalMetadataView
-            descriptionView
-            directionsText
-            goalInputView
-            Spacer()
-            
-            if goalDetailVM.showSaveButton {
-                saveButton
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                goalMetadataView
+                descriptionView
+                directionsText
+                goalInputView
+                notes
+                Spacer()
+                
+                if goalDetailVM.showSaveButton {
+                    saveButton
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
         }
+        .padding(.horizontal)
     }
     
     /// Confetti Animation.
@@ -207,15 +224,139 @@ struct GoalDetailView: View {
     }
     
     /// Pencil edit button for the goal.
+    private var addNoteButton: some View {
+        Button {
+            showAddNoteSheet = true
+        } label: {
+            Text("Add Note")
+                .font(FontManager.Bungee.regular.font(size: 14))
+                .foregroundStyle(.spaceCadet)
+        }
+    }
+    
+    /// Pencil edit button for the goal.
     private var editButton: some View {
         Button {
             showEditGoalSheet = true
         } label: {
-            Image(systemName: "pencil")
-                .resizable()
-                .foregroundStyle(.primary)
-                .frame(width: 16, height: 16)
+            Text("Edit")
+                .font(FontManager.Bungee.regular.font(size: 14))
+                .foregroundStyle(.sunglow)
+//            Image(systemName: "pencil")
+//                .resizable()
+//                .foregroundStyle(.primary)
+//                .frame(width: 16, height: 16)
         }
+    }
+    
+    private var notes: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Notes")
+                .font(FontManager.Bungee.regular.font(size: 12))
+                .foregroundStyle(.textSecondary)
+            
+            ForEach(goalDetailVM.goalNotes, id: \.self) { note in
+                VStack(spacing: 4) {
+                    
+                    Text(note.dateCreated.dateValue().formattedDateString)
+                        .font(FontManager.Bungee.regular.font(size: 12))
+                        .foregroundStyle(.textSecondary)
+                    
+                    ZStack(alignment: .leading) {
+                        // Full-width background
+                        UnevenRoundedRectangle(
+                            cornerRadii: .init(
+                                topLeading: 16,
+                                bottomLeading: 16,
+                                bottomTrailing: 0,
+                                topTrailing: 16
+                            )
+                        )
+                        .fill(.black.opacity(0.4))
+                        .frame(maxWidth: .infinity)
+                        
+                        // Text on top
+                        Text(note.note)
+                            .font(FontManager.Bungee.regular.font(size: 14))
+                            .foregroundStyle(.textPrimary)
+                            .padding()
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.vertical, 2)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+
+        }
+    }
+}
+
+// TODO: Move this out
+
+struct AddNoteView: View {
+    /// The dismiss environment object.
+    @Environment(\.dismiss) private var dismiss
+    
+    @ObservedObject var goalDetailVM: GoalDetailViewModel
+    
+    @State private var noteText: String = ""
+    
+    var body: some View {
+        VStack() {
+            Spacer()
+            
+            Text("Add note")
+                .font(FontManager.Bungee.regular.font(size: 22))
+                .foregroundStyle(.textSecondary)
+            
+            ZStack {
+                if noteText.isEmpty {
+                    Text("So whats on your mind...")
+                        .font(FontManager.Bungee.regular.font(size: 16))
+                        .foregroundStyle(.red)
+                }
+                
+                TextEditor(text: $noteText)
+                    .font(FontManager.Bungee.regular.font(size: 16))
+                    .foregroundStyle(.textBlack)
+                    .scrollContentBackground(.hidden)
+                    .textEditorStyle(.plain)
+                    .frame(height: 350)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white)
+                    )
+                    .padding()
+            }
+            
+            Spacer()
+            
+            Button {
+                Task {
+                    await goalDetailVM.saveNote(note: noteText)
+                    dismiss()
+                }
+            } label: {
+                Text("Save!")
+                    .font(FontManager.Bungee.regular.font(size: 18))
+                    .foregroundStyle(.textPrimary)
+                    .frame(height: 55)
+                    .frame(maxWidth: .infinity)
+                    .background(.utOrange)
+                    .clipShape(Capsule())
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.backgroundPrimary.ignoresSafeArea())
+    }
+}
+
+#Preview {
+    NavigationStack {
+        AddNoteView(goalDetailVM: GoalDetailViewModel(goal: Goal.dummy, firebaseService: FirebaseService()))
     }
 }
 

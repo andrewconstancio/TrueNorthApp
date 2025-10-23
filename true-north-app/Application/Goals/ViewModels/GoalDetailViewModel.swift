@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseFirestore
 
 class GoalDetailViewModel: ObservableObject {
     
@@ -14,6 +15,8 @@ class GoalDetailViewModel: ObservableObject {
     @Published var showAppError = false
     
     @Published var goal: Goal
+    
+    @Published var goalNotes: [GoalNote] = []
     
     /// Firebase service.
     let firebaseService: FirebaseServiceProtocol
@@ -109,6 +112,33 @@ class GoalDetailViewModel: ObservableObject {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
                 self.showSaveButton = true
             }
+        }
+    }
+    
+    @MainActor
+    func fetchNotes() async {
+        do {
+            let notes = try await firebaseService.fetchNotes(for: goal)
+            print(notes)
+            goalNotes = notes
+        } catch {
+            print(error.localizedDescription)
+        }
+    }
+    
+    func saveNote(note: String) async {
+        do {
+            guard let id = goal.id else { return }
+            let note = GoalNote(
+                goalId: id,
+                dateCreated: Timestamp(date: Date()),
+                note: note,
+                uid: ""
+            )
+            
+            try firebaseService.saveNote(for: note)
+        } catch {
+            print(error.localizedDescription)
         }
     }
 }

@@ -17,6 +17,8 @@ protocol FirebaseServiceProtocol {
     func setGoalStreak(for goalId: String, increment: Bool) async throws
     func checkDailyEntry(for goalId: String, selectedDate: Date) async throws -> Bool
     func deleteGoalAndHistory(for goal: Goal) async throws
+    func fetchNotes(for goal: Goal) async throws -> [GoalNote]
+    func saveNote(for goalNote: GoalNote) throws
 }
 
 class FirebaseService: ObservableObject, FirebaseServiceProtocol {
@@ -341,5 +343,31 @@ class FirebaseService: ObservableObject, FirebaseServiceProtocol {
             try await document.reference.delete()
         }
     }
+    
+    // MARK: Notes
+    
+    func fetchNotes(for goal: Goal) async throws -> [GoalNote] {
+        guard let goalId = goal.id else { return [] }
+        let snapshot = try await Firestore.firestore()
+            .collection("goalNotes")
+            .whereField("goalId", isEqualTo: goalId)
+            .order(by: "dateCreated", descending: true)
+            .getDocuments()
+        
+        return try snapshot.documents.compactMap {
+            try $0.data(as: GoalNote.self)
+        }
+    }
+    
+    func saveNote(for goalNote: GoalNote) throws {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        var goalNote = goalNote
+        goalNote.setUID(uid)
+        try Firestore.firestore().collection("goalNotes").addDocument(from: goalNote)
+    }
+    
+//    func deleteNote(for goal: Goal) async throws {
+//        
+//    }
 }
 
