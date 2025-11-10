@@ -119,7 +119,6 @@ class GoalDetailViewModel: ObservableObject {
     func fetchNotes() async {
         do {
             let notes = try await firebaseService.fetchNotes(for: goal)
-            print(notes)
             goalNotes = notes
         } catch {
             print(error.localizedDescription)

@@ -32,18 +32,16 @@ struct GoalDetailView: View {
         goal.title.lowercased() == goalDetailVM.goalReEntryText.lowercased() || goalDetailVM.dailyEntryCompleted
     }
     
-    /// The intializer for this view.
-    /// - Parameter goal: The user goal to be displayed.
-//    init(goal: Goal) {
-//        self.goal = goal
-//    }
-    
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottomTrailing) {
             confettiView
             mainContent
+            
+            if goalDetailVM.showSaveButton {
+                saveButton
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
-//        .padding()
         .scrollIndicators(.hidden)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -58,6 +56,11 @@ struct GoalDetailView: View {
         }
         .sheet(isPresented: $showAddNoteSheet) {
             AddNoteView(goalDetailVM: goalDetailVM)
+                .onDisappear {
+                    Task {
+                        await goalDetailVM.fetchNotes()
+                    }
+                }
         }
         .sheet(isPresented: $showEditGoalSheet) {
             NavigationStack {
@@ -68,19 +71,19 @@ struct GoalDetailView: View {
                         firebaseService: goalDetailVM.firebaseService
                     )
                 )
-                    .onDisappear {
-                        guard let id = goal.id else {
-                            return
-                        }
-                        Task {
-                            let exist = await goalDetailVM.refreshGoal(id)
-                            
-                            // If it doesn't exist anymore dismiss the view.
-                            if !exist {
-                                dismiss()
-                            }
+                .onDisappear {
+                    guard let id = goal.id else {
+                        return
+                    }
+                    Task {
+                        let exist = await goalDetailVM.refreshGoal(id)
+                        
+                        // If it doesn't exist anymore dismiss the view.
+                        if !exist {
+                            dismiss()
                         }
                     }
+                }
             }
         }
         .errorAlert(
@@ -92,7 +95,6 @@ struct GoalDetailView: View {
         // Show the retyping goal keyboard on appear.
         .onAppear {
             isKeyboardFocused = true
-            
             Task {
                 await goalDetailVM.fetchNotes()
             }
@@ -116,13 +118,7 @@ struct GoalDetailView: View {
                 descriptionView
                 directionsText
                 goalInputView
-                notes
-                Spacer()
-                
-                if goalDetailVM.showSaveButton {
-                    saveButton
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
+                goalNotes
             }
         }
         .padding(.horizontal)
@@ -249,46 +245,79 @@ struct GoalDetailView: View {
         }
     }
     
-    private var notes: some View {
+    private var goalNotes: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Notes")
                 .font(FontManager.Bungee.regular.font(size: 12))
                 .foregroundStyle(.textSecondary)
             
-            ForEach(goalDetailVM.goalNotes, id: \.self) { note in
-                VStack(spacing: 4) {
-                    
-                    Text(note.dateCreated.dateValue().formattedDateString)
-                        .font(FontManager.Bungee.regular.font(size: 12))
-                        .foregroundStyle(.textSecondary)
-                    
-                    ZStack(alignment: .leading) {
-                        // Full-width background
-                        UnevenRoundedRectangle(
-                            cornerRadii: .init(
-                                topLeading: 16,
-                                bottomLeading: 16,
-                                bottomTrailing: 0,
-                                topTrailing: 16
+            List {
+                ForEach(goalDetailVM.goalNotes) { note in
+                    VStack(spacing: 4) {
+                        Text(note.dateCreated.dateValue().formattedDateString)
+                            .font(FontManager.Bungee.regular.font(size: 12))
+                            .foregroundStyle(.textSecondary)
+    
+                        ZStack(alignment: .leading) {
+                            // Full-width background
+                            UnevenRoundedRectangle(
+                                cornerRadii: .init(
+                                    topLeading: 16,
+                                    bottomLeading: 16,
+                                    bottomTrailing: 0,
+                                    topTrailing: 16
+                                )
                             )
-                        )
-                        .fill(.black.opacity(0.4))
-                        .frame(maxWidth: .infinity)
-                        
-                        // Text on top
-                        Text(note.note)
-                            .font(FontManager.Bungee.regular.font(size: 14))
-                            .foregroundStyle(.textPrimary)
-                            .padding()
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(.vertical, 2)
+                            .fill(.black.opacity(0.4))
+                            .frame(maxWidth: .infinity)
+    
+                            // Text on top
+                            Text(note.note)
+                                .font(FontManager.Bungee.regular.font(size: 14))
+                                .foregroundStyle(.textPrimary)
+                                .padding()
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.vertical, 2)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-
-
+//            }
+//            .listStyle(.plain)
+            
+//            ForEach(goalDetailVM.goalNotes, id: \.self) { note in
+//                VStack(spacing: 4) {
+//
+//                    Text(note.dateCreated.dateValue().formattedDateString)
+//                        .font(FontManager.Bungee.regular.font(size: 12))
+//                        .foregroundStyle(.textSecondary)
+//
+//                    ZStack(alignment: .leading) {
+//                        // Full-width background
+//                        UnevenRoundedRectangle(
+//                            cornerRadii: .init(
+//                                topLeading: 16,
+//                                bottomLeading: 16,
+//                                bottomTrailing: 0,
+//                                topTrailing: 16
+//                            )
+//                        )
+//                        .fill(.black.opacity(0.4))
+//                        .frame(maxWidth: .infinity)
+//
+//                        // Text on top
+//                        Text(note.note)
+//                            .font(FontManager.Bungee.regular.font(size: 14))
+//                            .foregroundStyle(.textPrimary)
+//                            .padding()
+//                            .fixedSize(horizontal: false, vertical: true)
+//                            .padding(.vertical, 2)
+//                    }
+//                    .frame(maxWidth: .infinity, alignment: .leading)
+//                }
+//                .frame(maxWidth: .infinity, alignment: .leading)
+//            }
         }
     }
 }

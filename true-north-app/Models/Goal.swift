@@ -74,7 +74,7 @@ struct Goal: Identifiable, Codable, Hashable {
     }
 }
 
-struct GoalNote: Codable, Hashable {
+struct GoalNote: Codable, Hashable, Identifiable {
     @DocumentID var id: String?
     var goalId: String
     var dateCreated: Timestamp
