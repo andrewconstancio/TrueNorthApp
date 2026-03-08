@@ -53,13 +53,13 @@ struct GoalsListView: View {
         }
         .background(Color.backgroundPrimary.ignoresSafeArea())
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Text("Goals")
-                    .font(FontManager.Bungee.regular.font(size: 36))
-                    .foregroundStyle(.textPrimary)
-            }
+//            ToolbarItem(placement: .navigationBarLeading) {
+//                Text("Goals")
+//                    .font(FontManager.Bungee.regular.font(size: 12))
+//                    .foregroundStyle(.textPrimary)
+//            }
             
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .navigationBarTrailing) {
                 profileButton
             }
         }
@@ -85,7 +85,7 @@ struct GoalsListView: View {
 
     /// The users name and current date.
     private var headerView: some View {
-        VStack(alignment: .trailing, spacing: 8) {
+        VStack(alignment: .trailing, spacing: 12) {
             HStack {
                 if let user = authVM.authState.currentUser {
                     Text("\(user.firstName) \(user.lastName)")
@@ -99,14 +99,48 @@ struct GoalsListView: View {
                     .foregroundStyle(.textSecondary)
             }
             
-            Button {
-                showCalendarSheet = true
-            } label: {
-                Image(systemName: "calendar")
-                    .resizable()
-                    .foregroundStyle(.textPrimary)
-                    .frame(width: 18, height: 18, alignment: .leading)
+            HStack {
+                // Go back to today button if scrolling in the past.
+                if goalVM.selectedDate.isDateInPast() {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            goalVM.selectedDate = Date()
+                        }
+                    } label: {
+                        HStack {
+                            Text("Today")
+                            Image(systemName: "arrow.forward")
+                                .resizable()
+                                .frame(width: 10, height: 10, alignment: .leading)
+                                .fontWeight(.bold)
+                        }
+                        .font(FontManager.Bungee.regular.font(size: 12))
+                        .foregroundStyle(.textPrimary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(.blue)
+                        .clipShape(Capsule())
+                        .shadow(radius: 2)
+                    }
+                    .transition(.asymmetric(
+                        insertion: .scale.combined(with: .opacity),
+                        removal: .opacity
+                    ))
+                }
+                
+                Spacer()
+                
+                // Go to goal caledendar view.
+                Button {
+                    showCalendarSheet = true
+                } label: {
+                    Image(systemName: "calendar")
+                        .resizable()
+                        .foregroundStyle(.textPrimary)
+                        .frame(width: 22, height: 22, alignment: .leading)
+                }
             }
+        
         }
         .padding(.horizontal)
     }
@@ -217,13 +251,9 @@ struct GoalsListView: View {
                 AsyncCachedImage(url: url) { image in
                     image
                         .resizable()
+                        .frame(width: 38, height: 38)
                         .scaledToFill()
                         .clipShape(Circle())
-                        .frame(width: 38, height: 38)
-                        .overlay(
-                           Circle()
-                               .stroke(Color.sunglow, lineWidth: 3)
-                        )
                 } placeholder: {
                     ProgressView()
                 }

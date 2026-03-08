@@ -59,7 +59,7 @@ struct Goal: Identifiable, Codable, Hashable {
     
     static let dummy = Goal(
         id: UUID().uuidString,
-        title: "Learn SwiftUI really deep. I want to get really good.",
+        title: "Learn SwiftUI.",
         description: "Complete 5 SwiftUI tutorials and build a sample app.",
         dateCreated: Timestamp(date: Date()),
         complete: false,
@@ -68,6 +68,18 @@ struct Goal: Identifiable, Codable, Hashable {
         streak: 14,
         endDate: nil
     )
+    
+    mutating func setUID(_ uid: String) {
+        self.uid = uid
+    }
+}
+
+struct GoalNote: Codable, Hashable, Identifiable {
+    @DocumentID var id: String?
+    var goalId: String
+    var dateCreated: Timestamp
+    var note: String
+    var uid: String
     
     mutating func setUID(_ uid: String) {
         self.uid = uid

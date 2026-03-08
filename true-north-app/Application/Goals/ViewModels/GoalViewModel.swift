@@ -27,6 +27,8 @@ class GoalViewModel: ObservableObject {
     /// Firebase service.
     let firebaseService: FirebaseServiceProtocol
     
+    /// The initializer for this class.
+    /// - Parameter firebaseService: The firebase service injected.
     init(firebaseService: FirebaseServiceProtocol) {
         self.firebaseService = firebaseService
     }

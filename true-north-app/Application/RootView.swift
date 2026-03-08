@@ -98,7 +98,12 @@ struct RootView: View {
     }
 }
 
-//#Preview {
-//    RootView()
-//        .environmentObject(AuthViewModel())
-//}
+#Preview {
+    let firebaseService = FirebaseService()
+    RootView(
+        authVM: AuthViewModel(firebaseService: firebaseService),
+        goalViewModel: GoalViewModel(firebaseService: firebaseService)
+    )
+    .environment(\.firebaseService, firebaseService)
+    .environmentObject(NotificationService())
+}

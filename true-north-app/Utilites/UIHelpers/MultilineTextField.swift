@@ -39,7 +39,6 @@ public struct UITextViewWrapper: UIViewRepresentable {
         textField.isUserInteractionEnabled = true
         textField.isScrollEnabled = false
         textField.backgroundColor = UIColor.clear
-//        textField.layer.cornerRadius = 30
         textField.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
         textField.textContainer.lineFragmentPadding = 0
         textField.textColor = UIColor(Color.textPrimary)
@@ -54,6 +53,9 @@ public struct UITextViewWrapper: UIViewRepresentable {
         }
         textField.keyboardDismissMode = .interactive
         textField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        textField.autocorrectionType = .no
+        textField.autocapitalizationType = .none
+        textField.spellCheckingType = .no
         
         return textField
     }
@@ -243,7 +245,6 @@ struct MultilineTextField: View {
                 onEditingChanged: onEditingChanged,
                 maxLines: maxLines
             )
-//            .padding(.leading, -12)
         }
         .background(alignment: .leading, content: {
             if text.count == 0 {

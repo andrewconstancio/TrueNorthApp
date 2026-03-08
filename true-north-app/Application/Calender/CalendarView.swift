@@ -28,9 +28,10 @@ struct CalendarView: View {
     /// The calendar should go up to the current date.
     private var currentDate = Date()
     
+    @State private var scrollToCurrentMonth = false
+    
     var body: some View {
         VStack {
-            
             Spacer().frame(height: 50)
             customCalendar
         }
@@ -41,32 +42,62 @@ struct CalendarView: View {
     
     /// Custom calendar from `HorizonCalendar`.
     private var customCalendar: some View {
-        CalendarViewRepresentable(
-            calendar: calendar,
-            visibleDateRange: startDate...currentDate,
-            monthsLayout: .vertical(options: VerticalMonthsLayoutOptions()),
-            dataDependency: nil
-        )
-        .monthHeaders { month in
-            monthHeader(month)
-                .onAppear {
-                    Task {
-                        await calendarVM.fetchDaysCompleted(for: month.components)
+        GeometryReader { geometry in
+            CalendarViewRepresentable(
+                calendar: calendar,
+                visibleDateRange: startDate...currentDate,
+                monthsLayout: .vertical(options: VerticalMonthsLayoutOptions()),
+                dataDependency: scrollToCurrentMonth
+            )
+            .monthHeaders { month in
+                monthHeader(month)
+                    .onAppear {
+                        Task {
+                            await calendarVM.fetchDaysCompleted(for: month.components)
+                        }
+                    }
+            }
+            .dayOfWeekHeaders { _, weekdayIndex in
+                dayOfWeekHeader(weekdayIndex)
+            }
+            .days { day in
+                calendarDay(day)
+            }
+            .interMonthSpacing(24)
+            .verticalDayMargin(16)
+            .horizontalDayMargin(4)
+            .layoutMargins(.init(top: 8, leading: 8, bottom: 8, trailing: 8))
+            .backgroundColor(UIColor(Color.clear))
+            .padding()
+            .onAppear {
+                // Use introspection to find and scroll the internal UIScrollView
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    scrollToCurrentMonth.toggle()
+                    
+                    // Try to find and scroll the UIScrollView
+                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                       let window = windowScene.windows.first {
+                        findAndScrollToBottom(in: window)
                     }
                 }
+            }
         }
-        .dayOfWeekHeaders { _, weekdayIndex in
-            dayOfWeekHeader(weekdayIndex)
+    }
+    
+    /// Helper function to find UIScrollView and scroll to bottom
+    private func findAndScrollToBottom(in view: UIView) {
+        for subview in view.subviews {
+            if let scrollView = subview as? UIScrollView,
+               scrollView.contentSize.height > 0 {
+                let bottomOffset = CGPoint(
+                    x: 0,
+                    y: scrollView.contentSize.height - scrollView.bounds.height + scrollView.contentInset.bottom
+                )
+                scrollView.setContentOffset(bottomOffset, animated: true)
+                return
+            }
+            findAndScrollToBottom(in: subview)
         }
-        .days { day in
-            calendarDay(day)
-        }
-        .interMonthSpacing(24)
-        .verticalDayMargin(16)
-        .horizontalDayMargin(4)
-        .layoutMargins(.init(top: 8, leading: 8, bottom: 8, trailing: 8))
-        .backgroundColor(UIColor(Color.clear))
-        .padding()
     }
     
     /// Calendar month header.
