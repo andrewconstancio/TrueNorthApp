@@ -59,7 +59,7 @@ struct Goal: Identifiable, Codable, Hashable {
     
     static let dummy = Goal(
         id: UUID().uuidString,
-        title: "Learn SwiftUI really deep. I want to get really good.",
+        title: "Learn SwiftUI.",
         description: "Complete 5 SwiftUI tutorials and build a sample app.",
         dateCreated: Timestamp(date: Date()),
         complete: false,

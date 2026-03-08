@@ -11,7 +11,7 @@ struct GoalScrollDatePickerView: View {
     private var allDates: [Date] {
        let calendar = Calendar.current
        let today = Date()
-        return (-(authVM.authState.currentUser?.daysSinceCreated ?? 0)...7).compactMap { dayOffset in
+        return (-(authVM.authState.currentUser?.daysSinceCreated ?? 0)...4).compactMap { dayOffset in
            calendar.date(byAdding: .day, value: dayOffset, to: today)
        }
     }
@@ -50,7 +50,7 @@ struct GoalScrollDatePickerView: View {
                }
                .padding(.horizontal)
            }
-           .frame(height: 80)
+           .frame(height: 90)
            .onAppear {
                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                    withAnimation(.easeInOut(duration: 0.5)) {

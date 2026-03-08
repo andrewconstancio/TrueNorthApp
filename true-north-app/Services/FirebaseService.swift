@@ -19,6 +19,7 @@ protocol FirebaseServiceProtocol {
     func deleteGoalAndHistory(for goal: Goal) async throws
     func fetchNotes(for goal: Goal) async throws -> [GoalNote]
     func saveNote(for goalNote: GoalNote) throws
+    func deleteNote(noteID: String) async throws
 }
 
 class FirebaseService: ObservableObject, FirebaseServiceProtocol {
@@ -366,8 +367,12 @@ class FirebaseService: ObservableObject, FirebaseServiceProtocol {
         try Firestore.firestore().collection("goalNotes").addDocument(from: goalNote)
     }
     
-//    func deleteNote(for goal: Goal) async throws {
-//        
-//    }
+    func deleteNote(noteID: String) async throws {
+        try await Firestore
+            .firestore()
+            .collection("goalNotes")
+            .document(noteID)
+            .delete()
+    }
 }
 

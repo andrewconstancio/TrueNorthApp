@@ -120,6 +120,7 @@ class GoalDetailViewModel: ObservableObject {
         do {
             let notes = try await firebaseService.fetchNotes(for: goal)
             goalNotes = notes
+            print(goalNotes)
         } catch {
             print(error.localizedDescription)
         }
@@ -136,6 +137,19 @@ class GoalDetailViewModel: ObservableObject {
             )
             
             try firebaseService.saveNote(for: note)
+            goalNotes.insert(note, at: 0)
+        } catch {
+            print(error.localizedDescription)
+        }
+    }
+    
+    func deleteNote(noteID: String) async {
+        do {
+            try await firebaseService.deleteNote(noteID: noteID)
+            
+            await MainActor.run {
+                self.goalNotes.removeAll { $0.id == noteID }
+            }
         } catch {
             print(error.localizedDescription)
         }

@@ -2,6 +2,31 @@ import SwiftUI
 
 /// Extensions of the view.
 extension View {
+    /// A general purpose alert.
+    func generalAlert(
+        title: String,
+        message: String? = nil,
+        isPresented: Binding<Bool>,
+        primaryButton: (title: String, role: ButtonRole?, action: () -> Void)? = nil,
+        secondaryButton: (title: String, role: ButtonRole?, action: () -> Void)? = nil
+    ) -> some View {
+        alert(title, isPresented: isPresented, actions: {
+            if let primary = primaryButton {
+                Button(primary.title, role: primary.role, action: primary.action)
+            }
+            if let secondary = secondaryButton {
+                Button(secondary.title, role: secondary.role, action: secondary.action)
+            }
+            if primaryButton == nil && secondaryButton == nil {
+                Button("OK", role: .cancel) {}
+            }
+        }, message: {
+            if let message = message {
+                Text(message)
+            }
+        })
+    }
+    
     /// Hides the keyboard when the screen is tapped.
     func hideKeyboardOnTap() -> some View {
         self.onTapGesture {

@@ -53,13 +53,13 @@ struct GoalsListView: View {
         }
         .background(Color.backgroundPrimary.ignoresSafeArea())
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Text("Goals")
-                    .font(FontManager.Bungee.regular.font(size: 36))
-                    .foregroundStyle(.textPrimary)
-            }
+//            ToolbarItem(placement: .navigationBarLeading) {
+//                Text("Goals")
+//                    .font(FontManager.Bungee.regular.font(size: 12))
+//                    .foregroundStyle(.textPrimary)
+//            }
             
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .navigationBarTrailing) {
                 profileButton
             }
         }
@@ -251,13 +251,9 @@ struct GoalsListView: View {
                 AsyncCachedImage(url: url) { image in
                     image
                         .resizable()
+                        .frame(width: 38, height: 38)
                         .scaledToFill()
                         .clipShape(Circle())
-                        .frame(width: 38, height: 38)
-                        .overlay(
-                           Circle()
-                               .stroke(Color.sunglow, lineWidth: 3)
-                        )
                 } placeholder: {
                     ProgressView()
                 }

@@ -3,11 +3,11 @@ import SwiftUI
 
 //class GoalsListDateViewModel: ObservableObject {
 //    private var firebaseService: FirebaseServiceProtocol
-//    
+//
 //    init(firebaseService: FirebaseServiceProtocol) {
 //        self.firebaseService = firebaseService
 //    }
-//    
+//
 //    func completedDay(_ selectedDate: Date) async -> Bool {
 //        do {
 //            let completed = try await firebaseService.checkCompletedForDay(selectedDate: selectedDate)
@@ -28,6 +28,7 @@ struct GoalsListDateView: View {
     let onTap: () -> Void
     
     @State var completed: Bool?
+    @State private var isPulsing = false
     
     var body: some View {
         Button(action: onTap) {
@@ -60,9 +61,25 @@ struct GoalsListDateView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(.spaceCadet, lineWidth: Calendar.current.isDateInToday(date) ? 1 : 0)
                 )
+                .shadow(
+                    color: Calendar.current.isDateInToday(date) ? .spaceCadet.opacity(isPulsing ? 1.0 : 0.2) : .clear,
+                    radius: isPulsing ? 4 : 2,
+                    x: 0,
+                    y: 0
+                )
+                .scaleEffect(Calendar.current.isDateInToday(date) && isPulsing ? 1.05 : 1.0)
+                .animation(
+                    Calendar.current.isDateInToday(date)
+                    ? .easeInOut(duration: 1.0).repeatForever(autoreverses: true)
+                    : .default,
+                    value: isPulsing
+                )
                 .onAppear {
                     Task {
                         self.completed = await goalVM.checkCompletedForDay(date)
+                    }
+                    if Calendar.current.isDateInToday(date) {
+                        isPulsing = true
                     }
                 }
             }
@@ -134,3 +151,4 @@ struct GoalsListDateView: View {
         }
     }
 }
+
